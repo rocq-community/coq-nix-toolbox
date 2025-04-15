@@ -1561,7 +1561,6 @@ jobs:
     - bignums
     - multinomials
     - mathcomp-real-closed
-    - paramcoq
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -1629,10 +1628,6 @@ jobs:
       name: 'Building/fetching previous CI target: mathcomp-real-closed'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-real-closed"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: paramcoq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "paramcoq"
     - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
@@ -2491,6 +2486,94 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "gappalib"
+  graph-theory:
+    needs:
+    - coq
+    - mathcomp-algebra
+    - mathcomp-finmap
+    - mathcomp-fingroup
+    - mathcomp-algebra-tactics
+    - fourcolor
+    - stdlib
+    runs-on: ubuntu-latest
+    steps:
+    - name: Determine which commit to initially checkout
+      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
+        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
+        }}\" >> $GITHUB_ENV\nfi\n"
+    - name: Git checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ env.target_commit }}
+    - name: Determine which commit to test
+      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
+        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
+        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
+        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
+        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
+        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
+        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
+        \  fi\nfi\n"
+    - name: Git checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ env.tested_commit }}
+    - name: Cachix install
+      uses: cachix/install-nix-action@v30
+      with:
+        nix_path: nixpkgs=channel:nixpkgs-unstable
+    - name: Cachix setup coq-community
+      uses: cachix/cachix-action@v15
+      with:
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        extraPullNames: coq, math-comp
+        name: coq-community
+    - id: stepGetDerivation
+      name: Getting derivation for current job (graph-theory)
+      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
+        \"8.20\" --argstr job \"graph-theory\" \\\n   --dry-run 2> err > out || (touch
+        fail; true)\n"
+    - name: Error reporting
+      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
+    - name: Failure check
+      run: if [ -e fail ]; then exit 1; else exit 0; fi;
+    - id: stepCheck
+      name: Checking presence of CI target for current job
+      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: coq'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "coq"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: mathcomp-algebra'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "mathcomp-algebra"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: mathcomp-finmap'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "mathcomp-finmap"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: mathcomp-fingroup'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "mathcomp-fingroup"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: mathcomp-algebra-tactics'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "mathcomp-algebra-tactics"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: fourcolor'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "fourcolor"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: stdlib'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "stdlib"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: Building/fetching current CI target
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
+        job "graph-theory"
   hierarchy-builder:
     needs:
     - coq
@@ -3030,7 +3113,6 @@ jobs:
     - mathcomp-field
     - mathcomp-character
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -3111,10 +3193,6 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp"
@@ -3124,7 +3202,6 @@ jobs:
     - mathcomp-ssreflect
     - mathcomp-fingroup
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -3188,10 +3265,6 @@ jobs:
       name: 'Building/fetching previous CI target: hierarchy-builder'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
@@ -3269,162 +3342,6 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-algebra-tactics"
-  mathcomp-analysis:
-    needs:
-    - coq
-    - mathcomp-reals
-    - mathcomp-field
-    - mathcomp-bigenough
-    - hierarchy-builder
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-analysis)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-analysis\" \\\n   --dry-run 2> err > out
-        || (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-reals'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-reals"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-field'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-field"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-bigenough'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-bigenough"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: hierarchy-builder'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-analysis"
-  mathcomp-analysis-stdlib:
-    needs:
-    - coq
-    - mathcomp-analysis
-    - mathcomp-reals-stdlib
-    - stdlib
-    - hierarchy-builder
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-analysis-stdlib)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-analysis-stdlib\" \\\n   --dry-run 2> err
-        > out || (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-analysis'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-analysis"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-reals-stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-reals-stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: hierarchy-builder'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-analysis-stdlib"
   mathcomp-bigenough:
     needs:
     - coq
@@ -3497,7 +3414,6 @@ jobs:
     - mathcomp-solvable
     - mathcomp-field
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -3574,159 +3490,9 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-character"
-  mathcomp-classical:
-    needs:
-    - coq
-    - mathcomp-algebra
-    - mathcomp-finmap
-    - hierarchy-builder
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-classical)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-classical\" \\\n   --dry-run 2> err > out
-        || (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-algebra'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-algebra"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-finmap'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-finmap"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: hierarchy-builder'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-classical"
-  mathcomp-experimental-reals:
-    needs:
-    - coq
-    - mathcomp-reals
-    - mathcomp-bigenough
-    - hierarchy-builder
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-experimental-reals)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-experimental-reals\" \\\n   --dry-run 2>
-        err > out || (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-reals'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-reals"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-bigenough'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-bigenough"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: hierarchy-builder'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-experimental-reals"
   mathcomp-field:
     needs:
     - coq
@@ -3735,7 +3501,6 @@ jobs:
     - mathcomp-algebra
     - mathcomp-solvable
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -3808,10 +3573,6 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-field"
@@ -3820,7 +3581,6 @@ jobs:
     - coq
     - mathcomp-ssreflect
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -3880,10 +3640,6 @@ jobs:
       name: 'Building/fetching previous CI target: hierarchy-builder'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
     - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
@@ -3951,79 +3707,6 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-finmap"
-  mathcomp-infotheo:
-    needs:
-    - coq
-    - mathcomp-analysis-stdlib
-    - mathcomp-algebra-tactics
-    - interval
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-infotheo)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-infotheo\" \\\n   --dry-run 2> err > out
-        || (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-analysis-stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-analysis-stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-algebra-tactics'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-algebra-tactics"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: interval'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "interval"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-infotheo"
   mathcomp-real-closed:
     needs:
     - coq
@@ -4112,147 +3795,6 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-real-closed"
-  mathcomp-reals:
-    needs:
-    - coq
-    - mathcomp-classical
-    - hierarchy-builder
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-reals)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-reals\" \\\n   --dry-run 2> err > out ||
-        (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-classical'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-classical"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: hierarchy-builder'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-reals"
-  mathcomp-reals-stdlib:
-    needs:
-    - coq
-    - mathcomp-reals
-    - stdlib
-    - hierarchy-builder
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-reals-stdlib)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-reals-stdlib\" \\\n   --dry-run 2> err >
-        out || (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-reals'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-reals"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: hierarchy-builder'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "hierarchy-builder"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-reals-stdlib"
   mathcomp-solvable:
     needs:
     - coq
@@ -4260,7 +3802,6 @@ jobs:
     - mathcomp-fingroup
     - mathcomp-algebra
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -4329,10 +3870,6 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-solvable"
@@ -4340,7 +3877,6 @@ jobs:
     needs:
     - coq
     - hierarchy-builder
-    - stdlib
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -4397,81 +3933,9 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "hierarchy-builder"
     - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "mathcomp-ssreflect"
-  mathcomp-tarjan:
-    needs:
-    - coq
-    - mathcomp-ssreflect
-    - mathcomp-fingroup
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (mathcomp-tarjan)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"mathcomp-tarjan\" \\\n   --dry-run 2> err > out ||
-        (touch fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-ssreflect'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-ssreflect"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-fingroup'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-fingroup"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-tarjan"
   mathcomp-word:
     needs:
     - coq
@@ -5849,74 +5313,6 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "parsec"
-  reglang:
-    needs:
-    - coq
-    - mathcomp-ssreflect
-    - stdlib
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (reglang)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"reglang\" \\\n   --dry-run 2> err > out || (touch
-        fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-ssreflect'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-ssreflect"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: stdlib'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "stdlib"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "reglang"
   relation-algebra:
     needs:
     - coq
@@ -6111,94 +5507,6 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
         job "simple-io"
-  ssprove:
-    needs:
-    - coq
-    - equations
-    - mathcomp-ssreflect
-    - mathcomp-analysis
-    - mathcomp-experimental-reals
-    - extructures
-    - deriving
-    runs-on: ubuntu-latest
-    steps:
-    - name: Determine which commit to initially checkout
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  echo \"target_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.target_commit }}
-    - name: Determine which commit to test
-      run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"tested_commit=${{
-        github.sha }}\" >> $GITHUB_ENV\nelse\n  merge_commit=$(git ls-remote ${{ github.event.repository.html_url
-        }} refs/pull/${{ github.event.number }}/merge | cut -f1)\n  mergeable=$(git
-        merge --no-commit --no-ff ${{ github.event.pull_request.base.sha }} > /dev/null
-        2>&1; echo $?; git merge --abort > /dev/null 2>&1 || true)\n  if [ -z \"$merge_commit\"\
-        \ -o \"x$mergeable\" != \"x0\" ]; then\n    echo \"tested_commit=${{ github.event.pull_request.head.sha
-        }}\" >> $GITHUB_ENV\n  else\n    echo \"tested_commit=$merge_commit\" >> $GITHUB_ENV\n\
-        \  fi\nfi\n"
-    - name: Git checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ env.tested_commit }}
-    - name: Cachix install
-      uses: cachix/install-nix-action@v30
-      with:
-        nix_path: nixpkgs=channel:nixpkgs-unstable
-    - name: Cachix setup coq-community
-      uses: cachix/cachix-action@v15
-      with:
-        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-        extraPullNames: coq, math-comp
-        name: coq-community
-    - id: stepGetDerivation
-      name: Getting derivation for current job (ssprove)
-      run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
-        \"8.20\" --argstr job \"ssprove\" \\\n   --dry-run 2> err > out || (touch
-        fail; true)\n"
-    - name: Error reporting
-      run: "echo \"out=\"; cat out\necho \"err=\"; cat err\n"
-    - name: Failure check
-      run: if [ -e fail ]; then exit 1; else exit 0; fi;
-    - id: stepCheck
-      name: Checking presence of CI target for current job
-      run: (echo -n status=; cat out err | grep "built:" | sed "s/.*/built/") >> $GITHUB_OUTPUT
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: coq'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "coq"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: equations'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "equations"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-ssreflect'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-ssreflect"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-analysis'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-analysis"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: mathcomp-experimental-reals'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "mathcomp-experimental-reals"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: extructures'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "extructures"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: 'Building/fetching previous CI target: deriving'
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "deriving"
-    - if: steps.stepCheck.outputs.status == 'built'
-      name: Building/fetching current CI target
-      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.20" --argstr
-        job "ssprove"
   stalmarck:
     needs:
     - coq
