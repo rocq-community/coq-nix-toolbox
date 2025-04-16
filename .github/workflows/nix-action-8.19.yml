@@ -6916,6 +6916,7 @@ jobs:
     - mathcomp-experimental-reals
     - extructures
     - deriving
+    - mathcomp-word
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout
@@ -6991,6 +6992,10 @@ jobs:
       name: 'Building/fetching previous CI target: deriving'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.19" --argstr
         job "deriving"
+    - if: steps.stepCheck.outputs.status == 'built'
+      name: 'Building/fetching previous CI target: mathcomp-word'
+      run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.19" --argstr
+        job "mathcomp-word"
     - if: steps.stepCheck.outputs.status == 'built'
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "8.19" --argstr
