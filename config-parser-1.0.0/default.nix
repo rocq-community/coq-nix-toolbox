@@ -25,7 +25,8 @@ in with config; let
       path-to-attribute = config.path-to-attribute or [ "rocqPackages" ];
       coq-path-to-attribute = config.path-to-attribute or [ "coqPackages" ];
       path-to-shell-attribute =
-        config.path-to-shell-attribute or coq-path-to-attribute;
+        if hasAttr config.shell-attribute (bundle.rocqPackages or {})
+        then path-to-attribute else coq-path-to-attribute;
     in {
       # not configurable from config.nix:
       rocq = path-to-attribute ++ [ config.attribute ];
