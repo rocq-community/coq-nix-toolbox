@@ -44,13 +44,13 @@ with builtins; with lib; let
   };
   stepCachixInstall = {
     name =  "Cachix install";
-    uses =  "cachix/install-nix-action@v30";
+    uses =  "cachix/install-nix-action@v31";
     "with".nix_path = "nixpkgs=channel:nixpkgs-unstable";
   };
   stepCachixUse = { name, authToken ? null,
                     signingKey ? null, extraPullNames ? null }: {
     name =  "Cachix setup ${name}";
-    uses =  "cachix/cachix-action@v15";
+    uses =  "cachix/cachix-action@v16";
     "with" = { inherit name; } //
              (optionalAttrs (!isNull authToken) {
                authToken = "\${{ secrets.${authToken} }}";
