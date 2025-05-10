@@ -84,33 +84,33 @@ with builtins; with lib; let
       NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \
          --argstr bundle "${bundlestr}" --argstr job "${job}" \
          --dry-run 2> err > out || (touch fail; true)
+      cat out err
+      if [ -e fail ]; then echo "Error: getting derivation failed"; exit 1; fi
     '';
-  };
-
-  stepErrorReporting = {
-    name = "Error reporting";
-    run = ''
-        echo "out="; cat out
-        echo "err="; cat err
-    '';
-  };
-
-  stepFailureCheck = {
-    name = "Failure check";
-    run = "if [ -e fail ]; then exit 1; else exit 0; fi;";
   };
 
   stepCheck = {
     name = "Checking presence of CI target for current job";
     id = "stepCheck";
-    run = "(echo -n status=; cat out err | grep \"built:\" | sed \"s/.*/built/\") >> $GITHUB_OUTPUT";
+    run = ''
+        if $(cat out err | grep -q "built:") ; then
+          echo "CI target needs actual building"
+          if $(cat out err | grep -q "derivations will be built:") ; then
+            echo "waiting a bit for derivations that should be in cache"
+            sleep 30
+          fi
+        else
+          echo "CI target already built"
+          echo "status=fetched" >> $GITHUB_OUTPUT
+        fi
+    '';
   };
 
   stepBuild = {job, bundles ? [], current ? false}:
     let bundlestr = if isList bundles then "\${{ matrix.bundle }}" else bundles; in {
     name = if current then "Building/fetching current CI target"
            else "Building/fetching previous CI target: ${job}";
-    "if" = "steps.stepCheck.outputs.status == 'built'";
+    "if" = "steps.stepCheck.outputs.status != 'fetched'";
     run  = "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle \"${bundlestr}\" --argstr job \"${job}\"";
   };
 
@@ -125,8 +125,7 @@ with builtins; with lib; let
       steps = [ stepCommitToInitiallyCheckout stepCheckout1
                 stepCommitToTest stepCheckout2 stepCachixInstall ]
               ++ (stepCachixUseAll cachix)
-              ++ [ (stepGetDerivation { inherit job bundles; }) 
-                    stepErrorReporting stepFailureCheck stepCheck ]
+              ++ [ (stepGetDerivation { inherit job bundles; }) stepCheck ]
               ++ (map (job: stepBuild { inherit job bundles; }) jdeps)
               ++ [ (stepBuild { inherit job bundles; current = true; }) ];
     } // (optionalAttrs (isList bundles) {strategy.matrix.bundle = bundles;});
