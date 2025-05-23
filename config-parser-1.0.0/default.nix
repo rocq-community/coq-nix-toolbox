@@ -48,7 +48,7 @@ in with config; let
       let ppaths = bundle-ppaths i; in
       foldl recursiveUpdate {} (
         [ (mk-main ppaths.shell config.shell-attribute) ]
-        ++ optional (i ? rocqPackages) (mk-main ppaths.rocq config.attribute)
+        ++ optional ((i ? rocqPackages) && !(config.no-rocq-yet)) (mk-main ppaths.rocq config.attribute)
         ++ optional (i ? coqPackages) (mk-main ppaths.coq config.coq-attribute)
         ++ [
              i
@@ -64,7 +64,7 @@ in with config; let
   mk-instance = bundleName: bundle: let
     overlays = import ./overlays.nix
       { inherit lib overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir bundle;
-        inherit (config) attribute coq-attribute pname shell-attribute shell-pname src; };
+        inherit (config) attribute coq-attribute no-rocq-yet pname shell-attribute shell-pname src; };
 
     pkgs = import config.nixpkgs { inherit overlays; };
 

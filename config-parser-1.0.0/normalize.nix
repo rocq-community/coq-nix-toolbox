@@ -31,6 +31,7 @@ in rec {
   attribute = config.attribute or "template";
   coq-attribute = config.coq-attribute or attribute;
   shell-attribute = config.shell-attribute or attribute;
+  no-rocq-yet = config.no-rocq-yet or false;
   nixpkgs = config.nixpkgs or initial.nixpkgs;
   pname = config.pname or attribute;
   shell-pname = config.shell-pname or pname;
