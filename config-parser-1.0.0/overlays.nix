@@ -1,5 +1,5 @@
 { overlays-dir, lib, rocq-overlays-dir, coq-overlays-dir, ocaml-overlays-dir, bundle,
-  attribute, coq-attribute, pname, shell-attribute, shell-pname, src }:
+  attribute, coq-attribute, no-rocq-yet, pname, shell-attribute, shell-pname, src }:
 with builtins; with lib;
 let
   mk-overlay = path: self: super:
@@ -50,7 +50,7 @@ let
   nixpkgs-overrides
   (self: super: { rocqPackages = fold-override super.rocqPackages ([
     (mk-overlay rocq-overlays-dir)
-    rocq-overrides
+    ] ++ optional (!no-rocq-yet) rocq-overrides ++ [
     (self: super: { rocq-core = super.rocq-core.override {
       customOCamlPackages = fold-override super.rocq-core.ocamlPackages [
         (mk-overlay ocaml-overlays-dir)
