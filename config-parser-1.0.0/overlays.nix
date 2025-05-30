@@ -1,5 +1,5 @@
 { overlays-dir, lib, rocq-overlays-dir, coq-overlays-dir, ocaml-overlays-dir, bundle,
-  attribute, coq-attribute, pname, shell-attribute, shell-pname, src }:
+  attribute, coq-attribute, no-rocq-yet, pname, shell-attribute, shell-pname, src }:
 with builtins; with lib;
 let
   mk-overlay = path: self: super:
@@ -27,10 +27,10 @@ let
       { inherit pname; version = "${src}"; } // args;
     in
       mapAttrs (n: ov: do-override (super.${n} or
-        (switch n [
+        (switch n (optional (!no-rocq-yet) [
           { case = attribute;       out = newRocqPkg pname {}; }
           { case = shell-attribute; out = newRocqPkg shell-pname {}; }
-        ] (newRocqPkg n ((super.${n}.mk or (_: {})) self))
+        ]) (newRocqPkg n ((super.${n}.mk or (_: {})) self))
       )) ov) (bundle.rocqPackages or {});
   coq-overrides =
     self: super:
