@@ -17,7 +17,7 @@
 
   ## Set this when the package has no rocqPackages version yet
   ## (either in nixpkgs or in .nix/rocq-overlays)
-  # no-rock-yet = true;
+  # no-rocq-yet = true;
 
   ## If you want to select a different attribute (to build from the local sources as well)
   ## when calling `nix-shell` and `nix-build` without the `--argstr job` argument
