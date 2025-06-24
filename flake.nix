@@ -12,7 +12,7 @@
         # "aarch64-linux"
         # "x86_64-darwin"
         # "aarch64-darwin"
-      ] (system: function nixpkgs.legacyPackages.${system});
+      ] function;
   in {
     # lib = {
       
@@ -20,9 +20,9 @@
     # templates = {
     #   #default = ...;
     # };
-    packages = with nixpkgs.lib; forAllSystems (pkgs:
+    packages = with nixpkgs.lib; forAllSystems (system:
       let
-        underlying-nix = (import ./default.nix { inherit pkgs; });
+        underlying-nix = (import ./default.nix { inherit system; });
         instances = underlying-nix.passthru.setup.instances;
         selected-instance = underlying-nix.passthru.setup.selected-instance;
         jobsList =
