@@ -77,17 +77,19 @@ in with config; let
     jsonPkgsRevDeps = toJSON genCI.pkgsRevDeps;
     jsonPkgsSorted = toJSON genCI.pkgsSorted;
 
+    jobs = let
+        jdeps = genAttrs ci.mains (n: genCI.pkgsRevDepsSet.${n} or {});
+      in
+      attrNames (removeAttrs
+        (jdeps // genAttrs ci.jobs (_: true)
+        // foldAttrs (_: _: true) true (attrValues jdeps))
+        ci.excluded);
+
     inherit (import ../action.nix { inherit lib; }) mkJobs mkAction;
     action = mkAction {
       inherit (config) cachix;
+      inherit jobs;
       bundles = bundleName;
-      jobs = let
-          jdeps = genAttrs ci.mains (n: genCI.pkgsRevDepsSet.${n} or {});
-        in
-        attrNames (removeAttrs
-          (jdeps // genAttrs ci.jobs (_: true)
-          // foldAttrs (_: _: true) true (attrValues jdeps))
-          ci.excluded);
       deps = genCI.pkgsDeps;
     } {
       push-branches = bundle.push-branches or [ "master" ];
@@ -113,6 +115,7 @@ in with config; let
       inherit bundle pkgs this-pkg this-shell-pkg ci genCI;
       inherit jsonPkgsDeps jsonPkgsSorted jsonPkgsRevDeps;
       inherit action jsonAction jsonActionFile;
+      inherit jobs;
       jsonBundle = toJSON bundle;
     };
   in
