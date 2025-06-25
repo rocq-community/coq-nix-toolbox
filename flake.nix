@@ -9,17 +9,17 @@
     forAllSystems = function:
       nixpkgs.lib.genAttrs [
         "x86_64-linux"
-        # "aarch64-linux"
-        # "x86_64-darwin"
-        # "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
       ] function;
   in {
-    # lib = {
+    lib = {
       
-    # };
-    # templates = {
-    #   #default = ...;
-    # };
+    };
+    templates = {
+      #default = ...;
+    };
     packages = with nixpkgs.lib; forAllSystems (system:
       let
         underlying-nix = (import ./default.nix { inherit system; });
@@ -32,7 +32,7 @@
                 listOfJobs =
                   map
                     (jobName: {
-                      name = "${bundleName}/${jobName}";
+                      name = "${builtins.replaceStrings ["."] ["-"] bundleName}_${jobName}";
                       value = instance.pkgs.rocqPackages.${jobName} or
                               instance.pkgs.coqPackages.${jobName};
                     })
