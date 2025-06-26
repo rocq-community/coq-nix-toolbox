@@ -180,14 +180,14 @@ genNixActions (){
 addNixCommand genNixActions
 
 initNixConfig (){
-  Orig=$toolboxDir/template-config.nix
+  Orig=$toolboxDir/template/.nix/config.nix
   F=$configDir/config.nix;
   if [[ -f $F ]]; then
      echo "$F already exists"
   else if [[ -n "$1" ]]; then
        mkdir -p $configDir
        cat $Orig > $F
-       sed -i "s/template/$1/" $F
+       sed -i "s/YOUR_PACKAGE_NAME/$1/" $F
     else echo "usage: initNixConfig pname"
     fi
   fi
