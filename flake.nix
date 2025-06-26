@@ -29,7 +29,7 @@
                 bundleName: instance:
                 let
                   listOfJobs = map (jobName: {
-                    name = "${builtins.replaceStrings [ "." ] [ "-" ] bundleName}_${jobName}";
+                    name = "${builtins.replaceStrings [ "." ] [ "-" ] bundleName}:${jobName}";
                     value = instance.pkgs.rocqPackages.${jobName} or instance.pkgs.coqPackages.${jobName};
                   }) instance.jobs;
                 in
