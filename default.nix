@@ -30,7 +30,7 @@ in
   job ? null,
   bundle ? null,
   inNixShell ? null,
-  system
+  system ? null
 }@args:
 let
   optionalImport = f: d:
@@ -42,7 +42,7 @@ let
               // config;
     nixpkgs = optionalImport nixpkgs-file (throw "cannot find nixpkgs");
     inherit system;
-    pkgs = import initial.nixpkgs { inherit system; };
+    pkgs = import initial.nixpkgs (if (system != null) then { inherit system; } else { });
     src = src;
     lib = (initial.pkgs.coqPackages.lib or tmp-pkgs.lib)
           // { diag = f: x: f x x; };
