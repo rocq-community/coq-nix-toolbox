@@ -1,6 +1,6 @@
 # This file is a toolbox file to parse a ./nix/config.nix
 # file in format 1.0.0
-{lib, config, nixpkgs, src}@initial:
+{lib, config, nixpkgs, src, system}@initial:
 with builtins; with lib;
 let
   normalize-coqpkg = name: pkg: let j = pkg.job or name; in
