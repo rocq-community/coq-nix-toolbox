@@ -22,9 +22,9 @@
           forAllSystems (
             system:
             let
-              underlying-nix = (import ./default.nix { inherit system src; });
-              instances = underlying-nix.passthru.setup.instances;
-              selected-instance = underlying-nix.passthru.setup.selected-instance;
+              underlyingNix = (import ./default.nix { inherit system src; });
+              instances = underlyingNix.passthru.setup.instances;
+              defaultInstance = underlyingNix.passthru.setup.instances.${underlyingNix.passthru.setup.config.default-bundle};
               jobsList = mapAttrsToList (
                 bundleName: instance:
                 let
@@ -37,9 +37,9 @@
               ) instances;
             in
             (foldl mergeAttrs { } jobsList)
-            # // {
-            #   default = selected-instance.this-pkg;
-            # }
+            // {
+              default = defaultInstance.this-pkg;
+            }
           );
       };
       templates.default = {
