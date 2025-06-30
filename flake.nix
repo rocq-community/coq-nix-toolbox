@@ -43,6 +43,10 @@
             }
           );
       };
+      templates.default = {
+        path = ./template;
+        description = "Initialize the Rocq Nix Toolbox in a new project";
+      };
       packages = lib.allPackages ./.;
     };
 }
