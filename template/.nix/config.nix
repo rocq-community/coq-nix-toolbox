@@ -8,12 +8,12 @@
   ## either using nixpkgs data or the overlays located in `.nix/rocq-overlays`
   ## and `.nix/coq-overlays`
   ## Will determine the default main-job of the bundles defined below
-  attribute = "template";
+  attribute = "YOUR_PACKAGE_NAME";
 
   ## The attribute for coq compat shim, default to attribute
   ## set this when you need both to differ
   ## (for instance "rocq-elpi" and "coq-elpi")
-  # coq-attribute = "template";
+  # coq-attribute = "YOUR_PACKAGE_NAME";
 
   ## Set this when the package has no rocqPackages version yet
   ## (either in nixpkgs or in .nix/rocq-overlays)
