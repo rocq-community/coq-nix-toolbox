@@ -19,7 +19,7 @@ with (import (import ./nixpkgs.nix) {}).lib;
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
   ## compute several ci jobs as well
-  bundles = (genAttrs [ "8.18" "8.19" "8.20" "9.0" ]
+  bundles = (genAttrs [ "8.18" "8.19" "8.20" "9.0" "9.1" ]
     (v: {
       coqPackages.coq.override.version = v;
     })) // {
@@ -30,6 +30,9 @@ with (import (import ./nixpkgs.nix) {}).lib;
     };
     "rocq-9.0" = {
       rocqPackages.rocq-core.override.version = "9.0";
+    };
+    "rocq-9.1" = {
+      rocqPackages.rocq-core.override.version = "9.1";
     };
     "rocq-master" = {
       rocqPackages.rocq-core.override.version = "master";
