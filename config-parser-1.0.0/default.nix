@@ -47,7 +47,7 @@ in with config; let
     (_: i:
       let ppaths = bundle-ppaths i; in
       foldl recursiveUpdate {} (
-        [ (mk-main ppaths.shell config.shell-attribute) ]
+        optional (i ? coqPackages) (mk-main ppaths.shell config.shell-attribute)
         ++ optional ((i ? rocqPackages) && !(config.no-rocq-yet)) (mk-main ppaths.rocq config.attribute)
         ++ optional (i ? coqPackages) (mk-main ppaths.coq config.coq-attribute)
         ++ [
@@ -109,7 +109,7 @@ in with config; let
     notfound-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.coq}";
     notfound-shell-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.shell}";
     this-pkg = patchBIPkg (attrByPath ppaths.coq notfound-ppath pkgs);
-    this-shell-pkg = patchBIPkg (attrByPath ppaths.shell notfound-shell-ppath pkgs);
+    this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.coq notfound-ppath pkgs) pkgs);
 
     in rec {
       inherit bundle pkgs this-pkg this-shell-pkg ci genCI;
