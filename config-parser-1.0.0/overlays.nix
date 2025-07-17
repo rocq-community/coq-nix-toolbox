@@ -58,6 +58,9 @@ let
       ];};})
   ]);})
   (self: super: { coqPackages = fold-override super.coqPackages ([
+    (self2: super2: { coq = super2.coq.override {
+      rocqPackages = super.rocqPackages;
+      };})
     (mk-overlay coq-overlays-dir)
     coq-overrides
     (self: super: { coq = super.coq.override {
