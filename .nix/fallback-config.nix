@@ -1,4 +1,4 @@
-with (import (import ./nixpkgs.nix) {}).lib;
+with import "${import ./nixpkgs.nix}/lib";
 {
   ## DO NOT CHANGE THIS
   format = "1.0.0";
@@ -14,7 +14,7 @@ with (import (import ./nixpkgs.nix) {}).lib;
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "8.18";
+  default-bundle = "rocq-9.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
