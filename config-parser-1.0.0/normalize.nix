@@ -25,7 +25,7 @@ let
       mapAttrs normalize-coqpkg pkg;
   normalize-bundle = _name: b:
     mapAttrs normalize-pkg b
-    // optionalAttrs (b ? rocqPackages && ! b ? coqPackages) { isRocq = true; };
+    // { isRocq = b ? rocqPackages && !(b ? coqPackages); };
 in rec {
   format = "1.0.0";
   attribute = config.attribute or "template";

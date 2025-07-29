@@ -71,8 +71,10 @@ in with config; let
     ci = import ./ci.nix { inherit lib this-shell-pkg pkgs bundle; };
 
     genCI = import ../deps.nix
-      { inherit lib; coqPackages =
-        if bundle ? isRocq then pkgs.rocqPackages else pkgs.coqPackages; };
+      { inherit lib;
+        coqPackages =
+          (optionalAttrs (!bundle.isRocq) pkgs.coqPackages)
+          // pkgs.rocqPackages; };
     jsonPkgsDeps = toJSON genCI.pkgsDeps;
     jsonPkgsRevDeps = toJSON genCI.pkgsRevDeps;
 
