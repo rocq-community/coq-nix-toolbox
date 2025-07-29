@@ -51,5 +51,5 @@ let
   pkgsRevDeps = mapAttrs (n: v: attrNames v) pkgsRevDepsSet;
 in
 {
-  inherit pkgsDeps pkgsSorted pkgsRevDeps pkgsRevDepsSet;
+  inherit pkgsDeps pkgsRevDeps pkgsRevDepsSet;
 }

@@ -75,7 +75,6 @@ in with config; let
         if bundle ? isRocq then pkgs.rocqPackages else pkgs.coqPackages; };
     jsonPkgsDeps = toJSON genCI.pkgsDeps;
     jsonPkgsRevDeps = toJSON genCI.pkgsRevDeps;
-    jsonPkgsSorted = toJSON genCI.pkgsSorted;
 
     jobs = let
         jdeps = genAttrs ci.mains (n: genCI.pkgsRevDepsSet.${n} or {});
@@ -112,9 +111,9 @@ in with config; let
     this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.coq notfound-ppath pkgs) pkgs);
 
     in rec {
-      inherit bundle pkgs this-pkg this-shell-pkg ci genCI;
-      inherit jsonPkgsDeps jsonPkgsSorted jsonPkgsRevDeps;
-      inherit action jsonAction jsonActionFile;
+      inherit bundle pkgs this-pkg this-shell-pkg ci;
+      inherit jsonPkgsDeps jsonPkgsRevDeps;
+      inherit action jsonActionFile;
       inherit jobs;
       jsonBundle = toJSON bundle;
     };
