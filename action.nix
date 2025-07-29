@@ -114,14 +114,13 @@ with builtins; with lib; let
     run  = "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle \"${bundlestr}\" --argstr job \"${job}\"";
   };
 
-  mkJob = { job, jobs ? [], bundles ? [], deps ? {}, cachix ? {}, suffix ? false }:
+  mkJob = { job, jobs ? [], bundles ? [], deps ? {}, cachix ? {} }:
     let
-      suffixStr = optionalString (suffix && isString bundles) "-${bundles}";
       jdeps = deps.${job} or [];
     in {
-    "${job}${suffixStr}" = rec {
+    "${job}" = rec {
       runs-on = "ubuntu-latest";
-      needs = map (j: "${j}${suffixStr}") (filter (j: elem j jobs) jdeps);
+      needs = map (j: "${j}") (filter (j: elem j jobs) jdeps);
       steps = [ stepCommitToInitiallyCheckout stepCheckout1
                 stepCommitToTest stepCheckout2 stepCachixInstall ]
               ++ (stepCachixUseAll cachix)
@@ -131,7 +130,7 @@ with builtins; with lib; let
     } // (optionalAttrs (isList bundles) {strategy.matrix.bundle = bundles;});
   };
 
-  mkJobs = { jobs ? [], bundles ? [], deps ? {}, cachix ? {}, suffix ? false }@args:
+  mkJobs = { jobs ? [], bundles ? [], deps ? {}, cachix ? {} }@args:
     foldl (action: job: action // (mkJob ({ inherit job; } // args))) {} jobs;
 
   mkActionFromJobs = { actionJobs, bundles ? [], push-branches ? [] }:
@@ -154,4 +153,4 @@ with builtins; with lib; let
       { push-branches ? [] }:
     mkActionFromJobs {inherit bundles push-branches; actionJobs = mkJobs args; };
 
-in { inherit mkJob mkJobs mkAction; }
+in { inherit mkAction; }

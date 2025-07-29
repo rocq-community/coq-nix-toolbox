@@ -85,7 +85,7 @@ in with config; let
         // foldAttrs (_: _: true) true (attrValues jdeps))
         ci.excluded);
 
-    inherit (import ../action.nix { inherit lib; }) mkJobs mkAction;
+    inherit (import ../action.nix { inherit lib; }) mkAction;
     action = mkAction {
       inherit (config) cachix;
       inherit jobs;
