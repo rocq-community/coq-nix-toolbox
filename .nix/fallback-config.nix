@@ -14,24 +14,23 @@ with (import (import ./nixpkgs.nix) {}).lib;
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "8.18";
+  default-bundle = "9.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
   ## compute several ci jobs as well
-  bundles = (genAttrs [ "8.18" "8.19" "8.20" "9.0" "9.1" ]
+  bundles = (genAttrs [ "8.18" "8.19" "8.20" ]
     (v: {
       rocqPackages.rocq-core.override.version = v;
       rocqPackages.rocq-core.job = false;
       coqPackages.coq.override.version = v;
-      coqPackages.bignums.job = true;
-      coqPackages.coq-elpi.job = true;
-      coqPackages.hierarchy-builder.job = true;
-      coqPackages.stdlib.job = true;
+    })) // (genAttrs [ "9.0" "9.1" ]
+    (v: {
+      rocqPackages.rocq-core.override.version = v;
+      coqPackages.coq.override.version = v;
     })) // {
     master = {
       rocqPackages.rocq-core.override.version = "master";
-      rocqPackages.rocq-core.job = false;
       coqPackages.coq.override.version = "master";
       coqPackages.heq.job = false;
       coqPackages.stdlib.job = false;
@@ -44,7 +43,6 @@ with (import (import ./nixpkgs.nix) {}).lib;
     };
     "rocq-master" = {
       rocqPackages.rocq-core.override.version = "master";
-      rocqPackages.stdlib.override.version = "master";
     };
   };
 

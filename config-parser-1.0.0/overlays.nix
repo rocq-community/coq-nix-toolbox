@@ -57,6 +57,9 @@ let
         ocaml-overrides
       ];};})
   ]);})
+  (self: super: { rocqPackages =
+    super.rocqPackages.filterPackages
+      (! (super.rocqPackages.rocq-core.dontFilter or false)); })
   (self: super: { coqPackages = fold-override super.coqPackages ([
     (self2: super2: { coq = super2.coq.override {
       rocqPackages = super.rocqPackages;
@@ -69,9 +72,6 @@ let
         ocaml-overrides
       ];};})
   ]);})
-  (self: super: { rocqPackages =
-    super.rocqPackages.filterPackages
-      (! (super.rocqPackages.rocq-core.dontFilter or false)); })
   (self: super: { coqPackages =
     super.coqPackages.filterPackages
       (! (super.coqPackages.coq.dontFilter or false)); })

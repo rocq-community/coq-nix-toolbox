@@ -71,11 +71,12 @@ in with config; let
     ci = import ./ci.nix { inherit lib this-shell-pkg pkgs bundle; };
 
     genCI = import ../deps.nix
-      { inherit lib; coqPackages =
-        if bundle ? isRocq then pkgs.rocqPackages else pkgs.coqPackages; };
+      { inherit lib;
+        coqPackages =
+          (optionalAttrs (!bundle.isRocq) pkgs.coqPackages)
+          // pkgs.rocqPackages; };
     jsonPkgsDeps = toJSON genCI.pkgsDeps;
     jsonPkgsRevDeps = toJSON genCI.pkgsRevDeps;
-    jsonPkgsSorted = toJSON genCI.pkgsSorted;
 
     jobs = let
         jdeps = genAttrs ci.mains (n: genCI.pkgsRevDepsSet.${n} or {});
@@ -85,7 +86,7 @@ in with config; let
         // foldAttrs (_: _: true) true (attrValues jdeps))
         ci.excluded);
 
-    inherit (import ../action.nix { inherit lib; }) mkJobs mkAction;
+    inherit (import ../action.nix { inherit lib; }) mkAction;
     action = mkAction {
       inherit (config) cachix;
       inherit jobs;
@@ -112,9 +113,9 @@ in with config; let
     this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.coq notfound-ppath pkgs) pkgs);
 
     in rec {
-      inherit bundle pkgs this-pkg this-shell-pkg ci genCI;
-      inherit jsonPkgsDeps jsonPkgsSorted jsonPkgsRevDeps;
-      inherit action jsonAction jsonActionFile;
+      inherit bundle pkgs this-pkg this-shell-pkg ci;
+      inherit jsonPkgsDeps jsonPkgsRevDeps;
+      inherit action jsonActionFile;
       inherit jobs;
       jsonBundle = toJSON bundle;
     };
