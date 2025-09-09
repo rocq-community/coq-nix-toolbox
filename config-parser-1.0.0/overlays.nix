@@ -27,7 +27,7 @@ let
       { inherit pname; version = "${src}"; } // args;
     in
       mapAttrs (n: ov: do-override (super.${n} or
-        (switch n (optional (!no-rocq-yet) [
+        (switch n (optionals (!no-rocq-yet) [
           { case = attribute;       out = newRocqPkg pname {}; }
           { case = shell-attribute; out = newRocqPkg shell-pname {}; }
         ]) (newRocqPkg n ((super.${n}.mk or (_: {})) self))
