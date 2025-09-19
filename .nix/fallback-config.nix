@@ -1,3 +1,8 @@
+let
+  latest = builtins.fetchTarball {
+    url = "https://github.com/rocq-prover/rocq/archive/refs/heads/master.tar.gz";
+  };
+in
 with (import (import ./nixpkgs.nix) {}).lib;
 {
   ## DO NOT CHANGE THIS
@@ -30,8 +35,8 @@ with (import (import ./nixpkgs.nix) {}).lib;
       coqPackages.coq.override.version = v;
     })) // {
     master = {
-      rocqPackages.rocq-core.override.version = "master";
-      coqPackages.coq.override.version = "master";
+      rocqPackages.rocq-core.override.version = latest;
+      coqPackages.coq.override.version = latest;
       coqPackages.heq.job = false;
       coqPackages.stdlib.job = false;
     };
@@ -42,7 +47,7 @@ with (import (import ./nixpkgs.nix) {}).lib;
       rocqPackages.rocq-core.override.version = "9.1";
     };
     "rocq-master" = {
-      rocqPackages.rocq-core.override.version = "master";
+      rocqPackages.rocq-core.override.version = latest;
     };
   };
 
