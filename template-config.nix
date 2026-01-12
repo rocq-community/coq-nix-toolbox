@@ -62,7 +62,8 @@
     # rocqPackages.<rocq-pkg>.overrideAttrs = o: <overrides>;
     # coqPackages.<coq-pkg>.overrideAttrs = o: <overrides>;
     ## or a "long" overlay to put in `.nix/rocq-overlays` or `.nix/coq-overlays`
-    ## you may use `nix-shell --run fetchOverlay <coq-pkg>`
+    ## you may use `nix-shell --run fetchRocqOverlay <rocq-pkg>`
+    ## or `nix-shell --run fetchCoqOverlay <coq-pkg>`
     ## to automatically retrieve the one from nixpkgs
     ## if it exists and is correctly named/located
 
