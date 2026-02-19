@@ -2815,7 +2815,7 @@ jobs:
         --argstr job "mathcomp-analysis-stdlib"
   mathcomp-bigenough:
     needs:
-    - coq
+    - rocq-core
     - mathcomp-boot
     runs-on: ubuntu-latest
     steps:
@@ -2866,9 +2866,9 @@ jobs:
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
     - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: coq'
+      name: 'Building/fetching previous CI target: rocq-core'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "9.1" 
-        --argstr job "coq"
+        --argstr job "rocq-core"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: mathcomp-boot'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "9.1" 
@@ -3303,7 +3303,7 @@ jobs:
         --argstr job "mathcomp-fingroup"
   mathcomp-finmap:
     needs:
-    - coq
+    - rocq-core
     - mathcomp-boot
     runs-on: ubuntu-latest
     steps:
@@ -3354,9 +3354,9 @@ jobs:
         \n    sleep 30\n  fi\nelse\n  echo \"CI target already built\"\n  echo \"\
         status=fetched\" >> $GITHUB_OUTPUT\nfi\n"
     - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: coq'
+      name: 'Building/fetching previous CI target: rocq-core'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "9.1" 
-        --argstr job "coq"
+        --argstr job "rocq-core"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: mathcomp-boot'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle "9.1" 
