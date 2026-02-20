@@ -29,6 +29,7 @@ in
   update-nixpkgs ? false,
   job ? null,
   bundle ? null,
+  no-lsp ? false,
   inNixShell ? null
 }@args:
 let
@@ -67,7 +68,7 @@ with initial.lib; let
   jsonBundles = toJSON (attrNames setup.bundles);
   jsonBundleSet = toJSON setup.bundles;
   jsonBundle = toJSON selected-instance.bundle;
-  coq-lsp = if selected-instance.pkgs.coqPackages?coq-lsp then
+  coq-lsp = if !no-lsp && selected-instance.pkgs.coqPackages?coq-lsp then
      [ selected-instance.pkgs.coqPackages.coq-lsp ] else [];
   vscoq = if selected-instance.pkgs.coqPackages?vscoq-language-server then
      [ selected-instance.pkgs.coqPackages.vscoq-language-server ] else [];
