@@ -29,7 +29,9 @@ in
   update-nixpkgs ? false,
   job ? null,
   bundle ? null,
-  no-lsp ? false,
+  no-vsrocq ? false,
+  no-vscoq ? false,
+  no-coq-lsp ? false,
   inNixShell ? null
 }@args:
 let
@@ -68,10 +70,12 @@ with initial.lib; let
   jsonBundles = toJSON (attrNames setup.bundles);
   jsonBundleSet = toJSON setup.bundles;
   jsonBundle = toJSON selected-instance.bundle;
-  coq-lsp = if !no-lsp && selected-instance.pkgs.coqPackages?coq-lsp then
+  coq-lsp = if !no-coq-lsp && selected-instance.pkgs.coqPackages?coq-lsp then
      [ selected-instance.pkgs.coqPackages.coq-lsp ] else [];
-  vscoq = if selected-instance.pkgs.coqPackages?vscoq-language-server then
+  vscoq = if !no-vscoq && selected-instance.pkgs.coqPackages?vscoq-language-server then
      [ selected-instance.pkgs.coqPackages.vscoq-language-server ] else [];
+  vsrocq = if !no-vsrocq && selected-instance.pkgs.rocqackages?vsrocq-language-server then
+     [ selected-instance.pkgs.rocqPackages.vsrocq-language-server ] else [];
   emacs = selected-instance.pkgs.emacs.pkgs.withPackages
     (epkgs: with epkgs.melpaPackages; [ proof-general ]);
   emacsInit = ./emacs-init.el;
