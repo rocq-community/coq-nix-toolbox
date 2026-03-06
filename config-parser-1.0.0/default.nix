@@ -66,15 +66,15 @@ in with config; let
       { inherit lib overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir bundle;
         inherit (config) attribute coq-attribute no-rocq-yet pname shell-attribute shell-pname src; };
 
-    pkgs = import config.nixpkgs { inherit overlays; };
+    overlayed-pkgs = pkgs.appendOverlays overlays;
 
-    ci = import ./ci.nix { inherit lib this-shell-pkg pkgs bundle; };
+    ci = import ./ci.nix { inherit lib this-shell-pkg bundle; pkgs = overlayed-pkgs; };
 
     genCI = import ../deps.nix
       { inherit lib;
         coqPackages =
-          (optionalAttrs (!bundle.isRocq) pkgs.coqPackages)
-          // pkgs.rocqPackages; };
+          (optionalAttrs (!bundle.isRocq) overlayed-pkgs.coqPackages)
+          // overlayed-pkgs.rocqPackages; };
     jsonPkgsDeps = toJSON genCI.pkgsDeps;
     jsonPkgsRevDeps = toJSON genCI.pkgsRevDeps;
 
@@ -102,18 +102,19 @@ in with config; let
     };
 
     patchBIPkg = pkg:
-      let bi = map (buildInputFrom pkgs) (config.buildInputs or []); in
+      let bi = map (buildInputFrom overlayed-pkgs) (config.buildInputs or []); in
       if bi == [] then pkg else
       pkg.overrideAttrs (o: { buildInputs = o.buildInputs ++ bi;});
 
     ppaths = bundle-ppaths bundle;
     notfound-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.coq}";
     notfound-shell-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.shell}";
-    this-pkg = patchBIPkg (attrByPath ppaths.coq notfound-ppath pkgs);
-    this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.coq notfound-ppath pkgs) pkgs);
+    this-pkg = patchBIPkg (attrByPath ppaths.coq notfound-ppath overlayed-pkgs);
+    this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.coq notfound-ppath overlayed-pkgs) overlayed-pkgs);
 
     in rec {
-      inherit bundle pkgs this-pkg this-shell-pkg ci;
+      pkgs = overlayed-pkgs;
+      inherit bundle this-pkg this-shell-pkg ci;
       inherit jsonPkgsDeps jsonPkgsRevDeps;
       inherit action jsonActionFile;
       inherit jobs;

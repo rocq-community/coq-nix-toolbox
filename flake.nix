@@ -16,22 +16,6 @@
 
     mkRocqProject = import ./.;
 
-    # Those nix-toolbox options are translated to different flake outputs
-    # job
-    # bundle
-    # withEmacs
-
-
-    # Options i think should be dropped
-    #print-env ? false #-> Prints nixEnv inside nix-shell
-    #ci-matrix ? false #-> Prints a list of bundles as Json
-    #update-nixpkgs ? false,#-> Updates nixpkgs ... but i don't know where it does come from
-    #do-nothing ? false,#-> should be useless now ?
-
-
-    # Mouais
-    #inNixShell ? null
-
     mkRocqFlakesPackages = {
       src,
       config-file ? get-path src "config.nix",
@@ -48,32 +32,36 @@
       ocaml-override ? {},
       global-override ? {},
     }: let
-      theconfig = import config-file;
-      bundleData = ((import ./. { inherit src; do-nothing = true;})).setup.instances;
-      bundles = lib.attrsets.attrNames theconfig.bundles;
-      default-bundle = theconfig.default-bundle or (builtins.throw "Project did not define a default bundle");
-      jobs = lib.lists.unique (lib.concatLists (map (x: x.jobs) (lib.attrValues bundleData)));
-      # TODO add default job and bundle
-      # TODO generate flake output rocq-9-0 when finding a dot in job or bundle name (rocq-9.0 -> rocq-9-0). Keeps the other name, just in case
-      mkCNTDerivation = job: bundle: builtins.head (import ./default.nix {
+      options = {
         inherit src;
         inherit config-file fallback-file nixpkgs-file shellHook-file overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir;
 
         inherit config override coq-override ocaml-override global-override;
 
-        inherit job bundle;
-        withEmacs = false; # TODO this should be made a custom flake output
+        withEmacs = false; # TODO this should be made a custom flake output
 
         inNixShell = false;
         print-env = false;
         do-nothing = false;
         update-nixpkgs = false;
         ci-matrix = false;
-      });
+      };
+      theconfig = import config-file;
+      bundles = lib.attrsets.attrNames theconfig.bundles;
+      default-bundle = theconfig.default-bundle or (builtins.throw "Project did not define a default bundle");
+      getJobs = pkgs: let
+        bundleData = ((import ./. { inherit src; do-nothing = true; pkgs = (import nixpkgs {system = "x86_64-linux";});})).setup.instances; #TODO Remove system dependency here
+        in lib.lists.unique (lib.concatLists (map (x: x.jobs) (lib.attrValues bundleData)));
+      # TODO add default job and bundle
+      # TODO generate flake output rocq-9-0 when finding a dot in job or bundle name (rocq-9.0 -> rocq-9-0). Keeps the other name, just in case
+      mkCNTDerivation = pkgs: job: bundle: let
+        out = import ./default.nix (options // { inherit pkgs job bundle; });
+      in if out == [] then null else builtins.head out;
+
     in
-      lib.attrsets.genAttrs lib.systems.flakeExposed (system:
-       listToAttrs2d jobs bundles (job: bundle: "${job}_${bundle}") mkCNTDerivation //
-          lib.attrsets.genAttrs jobs (job: mkCNTDerivation job default-bundle) # Default bundles
+      lib.attrsets.genAttrs lib.systems.flakeExposed (system: let pkgs = import nixpkgs {inherit system;}; in
+        listToAttrs2d (getJobs pkgs) bundles (job: bundle: "${job}_${bundle}") (mkCNTDerivation pkgs) //
+          lib.attrsets.genAttrs (getJobs pkgs) (job: mkCNTDerivation pkgs job default-bundle) # Default bundles
       );
   };
 }
