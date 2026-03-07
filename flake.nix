@@ -35,6 +35,15 @@
             }) namesY
           ) namesX
         );
+      flakeOutputRenamer = lib.replaceString "." "-";
+      # Renames all entries of base attrset with renamer. Keeps the old entries.
+      buildAttrsRename =
+        renamer: base:
+        base
+        // (lib.genAttrs' (lib.attrNames base) (name: {
+          name = renamer name;
+          value = base.${name};
+        }));
       forEachSystem = f: lib.genAttrs lib.systems.flakeExposed f;
     in
     {
@@ -80,8 +89,6 @@
               global-override
               ;
 
-            withEmacs = false; # TODO this should be made a custom flake output
-
             inNixShell = false;
             print-env = false;
             do-nothing = false;
@@ -98,19 +105,26 @@
               bundleData =
                 (
                   (import ./. {
-                    inherit src;
+                    inherit src pkgs;
                     do-nothing = true;
-                    pkgs = (import nixpkgs { system = "x86_64-linux"; });
                   })
-                ).setup.instances; # TODO Remove system dependency here
+                ).setup.instances;
             in
             lib.lists.unique (lib.concatLists (map (x: x.jobs) (lib.attrValues bundleData)));
-          # TODO add default job and bundle
-          # TODO generate flake output rocq-9-0 when finding a dot in job or bundle name (rocq-9.0 -> rocq-9-0). Keeps the other name, just in case
           mkCNTDerivation =
-            pkgs: job: bundle:
+            pkgs: withEmacs: job: bundle:
             let
-              out = import ./default.nix (options // { inherit pkgs job bundle; });
+              out = import ./default.nix (
+                options
+                // {
+                  inherit
+                    pkgs
+                    job
+                    bundle
+                    withEmacs
+                    ;
+                }
+              );
             in
             if out == [ ] then null else builtins.head out;
 
@@ -120,8 +134,13 @@
           let
             pkgs = import nixpkgs { inherit system; };
           in
-          listToAttrs2d (getJobs pkgs) bundles (job: bundle: "${job}_${bundle}") (mkCNTDerivation pkgs)
-          // lib.attrsets.genAttrs (getJobs pkgs) (job: mkCNTDerivation pkgs job default-bundle) # Default bundles
+          buildAttrsRename flakeOutputRenamer (
+            listToAttrs2d (getJobs pkgs) bundles (job: bundle: "${job}_${bundle}") (mkCNTDerivation pkgs false)
+            // listToAttrs2d (getJobs pkgs) bundles (job: bundle: "${job}_${bundle}_emacs") (
+              mkCNTDerivation pkgs true
+            )
+            // lib.attrsets.genAttrs (getJobs pkgs) (job: mkCNTDerivation pkgs job default-bundle) # Default bundles
+          )
         );
       formatter = forEachSystem (
         system:
