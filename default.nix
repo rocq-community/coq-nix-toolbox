@@ -3,7 +3,6 @@
 # 2. a shell and a build derivation
 with builtins;
 let
-  toolboxDir = ./.;
   get-path = src: f: let local = src + "/.nix/${f}"; in
     if pathExists local then local else ./. + "/.nix/${f}";
 in
@@ -23,6 +22,7 @@ in
   coq-override ? {},
   ocaml-override ? {},
   global-override ? {},
+  pkgs ? null,
   withEmacs ? false,
   print-env ? false,
   do-nothing ? false,
@@ -35,15 +35,14 @@ let
   optionalImport = f: d:
     if (isPath f || isString f) && pathExists f then import f else d;
   do-nothing = (args.do-nothing or false) || update-nixpkgs || ci-matrix;
-  unNull = default: value: if isNull value then default else value;
   initial = {
     config = (optionalImport config-file (optionalImport fallback-file {}))
               // config;
     nixpkgs = optionalImport nixpkgs-file (throw "cannot find nixpkgs");
-    pkgs = import initial.nixpkgs {};
+    pkgs = if (args.pkgs or null) == null then (import initial.nixpkgs {}) else args.pkgs;
+    #pkgs = args.pkgs or import initial.nixpkgs {};
     src = src;
-    lib = (initial.pkgs.coqPackages.lib or tmp-pkgs.lib)
-          // { diag = f: x: f x x; };
+    lib = initial.pkgs.coqPackages.lib;
     inherit overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir;
     inherit global-override override coq-override ocaml-override;
   };
@@ -96,20 +95,20 @@ with initial.lib; let
   else with selected-instance; shell.overrideAttrs (old: {
     inherit (setup.config) nixpkgs coqproject;
     inherit jsonBundle jsonBundles jsonSetupConfig jsonCIbyBundle jsonBundleSet
-            jsonCIbyJob shellHook toolboxDir selectedBundle
+            jsonCIbyJob shellHook selectedBundle
             jsonPkgsDeps jsonPkgsRevDeps jsonActionFile;
 
     bundles = attrNames setup.bundles;
 
-    passthru = (old.passthru or {}) // {inherit action pkgs;};
+    passthru = (old.passthru or {}) // {inherit action; inherit (selected-instance) pkgs;};
 
     COQBIN = optionalString (!do-nothing) "";
 
     coq_version = optionalString (!do-nothing)
-       pkgs.coqPackages.coq.coq-version;
+       selected-instance.pkgs.coqPackages.coq.coq-version;
 
     nativeBuildInputs = optionals (!do-nothing)
-      ((old.nativeBuildInputs or []) ++ coq-lsp ++ vscoq) ++ [ pkgs.remarshal ];
+      ((old.nativeBuildInputs or []) ++ coq-lsp ++ vscoq) ++ [ selected-instance.pkgs.remarshal ];
 
     propagatedNativeBuildInputs = optionals (!do-nothing)
       (old.propagatedNativeBuildInputs or []);
