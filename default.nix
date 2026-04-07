@@ -93,7 +93,7 @@ with initial.lib; let
 
   mkDeriv = shell:
   if !inNixShell then shell
-  else with selected-instance; shell.overrideAttrs (old: {
+  else with selected-instance; shell.overrideAttrs (old: removeAttrs ({
     inherit (setup.config) nixpkgs coqproject;
     inherit jsonBundle jsonBundles jsonSetupConfig jsonCIbyBundle jsonBundleSet
             jsonCIbyJob shellHook toolboxDir selectedBundle
@@ -102,8 +102,6 @@ with initial.lib; let
     bundles = attrNames setup.bundles;
 
     passthru = (old.passthru or {}) // {inherit action pkgs;};
-
-    COQBIN = optionalString (!do-nothing) "";
 
     coq_version = optionalString (!do-nothing)
        pkgs.coqPackages.coq.coq-version;
@@ -119,10 +117,14 @@ with initial.lib; let
     propagatedBuildInputs = optionals (!do-nothing)
       (old.propagatedBuildInputs or []);
   }
+  // optionalAttrs (!do-nothing) {
+    env = removeAttrs (old.env or { }) [ "COQBIN" ];
+  }
   // optionalAttrs withEmacs {
       inherit emacsInit;
       emacsBin = "${emacs}" + "/bin/emacs";
-  });
+  })
+    (optionals (!do-nothing) [ "COQBIN" ]) );
 
   nix-ci = job: map mkDeriv (if allBundles
     then flatten (mapAttrsToList (_: i: i.ci.subpkgs job) instances)
