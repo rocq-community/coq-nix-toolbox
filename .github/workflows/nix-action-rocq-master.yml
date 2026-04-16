@@ -1,7 +1,7 @@
 jobs:
   rocq-core:
     needs: []
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Determine which commit to initially checkout
       run: "if [ ${{ github.event_name }} = \"push\" ]; then\n  echo \"target_commit=${{
@@ -53,6 +53,13 @@ jobs:
       name: Building/fetching current CI target
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-master" --argstr job "rocq-core"
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - ubuntu-24.04-arm
+        - macos-latest
 name: Nix CI for bundle rocq-master
 on:
   pull_request:

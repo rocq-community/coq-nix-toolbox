@@ -1,5 +1,6 @@
 { lib }:
 with builtins; with lib; let
+  osList = [ "ubuntu-latest" "ubuntu-24.04-arm" "macos-latest" ];
   stepCommitToInitiallyCheckout = {
     name = "Determine which commit to initially checkout";
     run = ''
@@ -119,7 +120,12 @@ with builtins; with lib; let
       jdeps = deps.${job} or [];
     in {
     "${job}" = rec {
-      runs-on = "ubuntu-latest";
+      runs-on = "\${{ matrix.os }}";
+      strategy = {
+        fail-fast = false;
+        matrix = { os = osList; }
+                 // (optionalAttrs (isList bundles) { bundle = bundles; });
+      };
       needs = map (j: "${j}") (filter (j: elem j jobs) jdeps);
       steps = [ stepCommitToInitiallyCheckout stepCheckout1
                 stepCommitToTest stepCheckout2 stepCachixInstall ]
@@ -127,7 +133,7 @@ with builtins; with lib; let
               ++ [ (stepGetDerivation { inherit job bundles; }) stepCheck ]
               ++ (map (job: stepBuild { inherit job bundles; }) jdeps)
               ++ [ (stepBuild { inherit job bundles; current = true; }) ];
-    } // (optionalAttrs (isList bundles) {strategy.matrix.bundle = bundles;});
+    };
   };
 
   mkJobs = { jobs ? [], bundles ? [], deps ? {}, cachix ? {} }@args:
