@@ -19,7 +19,9 @@ with (import (import ./nixpkgs.nix) {}).lib;
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
   ## compute several ci jobs as well
-  bundles = (genAttrs [ "8.20" ]
+  bundles = mapAttrs
+    (_: b: b // { runs-on = [ "ubuntu-latest" "ubuntu-24.04-arm" "macos-latest" ]; })
+    ((genAttrs [ "8.20" ]
     (v: {
       rocqPackages.rocq-core.override.version = v;
       rocqPackages.rocq-core.job = false;
@@ -47,7 +49,7 @@ with (import (import ./nixpkgs.nix) {}).lib;
     "rocq-master" = {
       rocqPackages.rocq-core.override.version = "master";
     };
-  };
+  });
 
   cachix.coq = {};
   cachix.math-comp = {};
