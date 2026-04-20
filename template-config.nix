@@ -96,6 +96,12 @@
 
     ## Run on push on following branches (default [ "master" ])
     # push-branches = [ "master" "branch2" ];
+
+    ## GitHub Actions runners to test the bundle on. Each entry is a
+    ## runner label. When more than one is given, jobs run in a
+    ## strategy.matrix on `os` with fail-fast disabled.
+    ## Defaults to [ "ubuntu-latest" ] (x86_64 Linux only).
+    # runs-on = [ "ubuntu-latest" "ubuntu-24.04-arm" "macos-latest" ];
   };
 
   ## Cachix caches to use in CI

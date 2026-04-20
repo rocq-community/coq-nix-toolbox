@@ -91,6 +91,7 @@ in with config; let
       inherit (config) cachix;
       inherit jobs;
       bundles = bundleName;
+      runs-on = bundle.runs-on or [ "ubuntu-latest" ];
       deps = genCI.pkgsDeps;
     } {
       push-branches = bundle.push-branches or [ "master" ];
