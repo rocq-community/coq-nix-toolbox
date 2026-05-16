@@ -71,6 +71,8 @@ with initial.lib; let
      [ selected-instance.pkgs.coqPackages.coq-lsp ] else [];
   vscoq = if selected-instance.pkgs.coqPackages?vscoq-language-server then
      [ selected-instance.pkgs.coqPackages.vscoq-language-server ] else [];
+  vsrocq = if selected-instance.pkgs.rocqPackages?vsrocq-language-server then
+     [ selected-instance.pkgs.rocqPackages.vsrocq-language-server ] else [];
   emacs = selected-instance.pkgs.emacs.pkgs.withPackages
     (epkgs: with epkgs.melpaPackages; [ proof-general ]);
   emacsInit = ./emacs-init.el;
@@ -109,7 +111,7 @@ with initial.lib; let
        pkgs.coqPackages.coq.coq-version;
 
     nativeBuildInputs = optionals (!do-nothing)
-      ((old.nativeBuildInputs or []) ++ coq-lsp ++ vscoq) ++ [ pkgs.remarshal ];
+      ((old.nativeBuildInputs or []) ++ coq-lsp ++ vscoq ++ vsrocq) ++ [ pkgs.remarshal ];
 
     propagatedNativeBuildInputs = optionals (!do-nothing)
       (old.propagatedNativeBuildInputs or []);
