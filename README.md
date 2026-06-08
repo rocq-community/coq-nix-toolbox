@@ -2,7 +2,7 @@
 
 ## General presentation
 
-The Coq Nix Toolbox provide the following features:
+The Coq Nix Toolbox provides the following features:
 
 1. It can generate [GitHub Actions](https://github.com/features/actions) configuration files to trigger a github action CI for your Rocq project and its reverse dependencies. This CI uses the Nix packaging system and a caching mechanism called [Cachix](https://www.cachix.org/).
 
@@ -22,7 +22,7 @@ The Coq Nix Toolbox relies on the [nixpkgs package repository](https://github.co
 The following section only needs to be setup once per computer, after the installation of Nix.
 
 1. Install Nix locally: see https://nixos.org/download.html.
-Additionally, in order to use binary caches from recognized organizations, please do
+2. In order to use binary caches from recognized organizations, please do
 ```bash
 nix-env -iA nixpkgs.cachix && cachix use coq && cachix use coq-community && cachix use math-comp
 ```
