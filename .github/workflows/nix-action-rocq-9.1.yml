@@ -756,7 +756,7 @@ jobs:
   mathcomp-experimental-reals:
     needs:
     - rocq-core
-    - mathcomp-reals
+    - mathcomp-analysis
     - mathcomp-bigenough
     runs-on: ubuntu-latest
     steps:
@@ -811,9 +811,9 @@ jobs:
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
         "rocq-9.1" --argstr job "rocq-core"
     - if: steps.stepCheck.outputs.status != 'fetched'
-      name: 'Building/fetching previous CI target: mathcomp-reals'
+      name: 'Building/fetching previous CI target: mathcomp-analysis'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
-        "rocq-9.1" --argstr job "mathcomp-reals"
+        "rocq-9.1" --argstr job "mathcomp-analysis"
     - if: steps.stepCheck.outputs.status != 'fetched'
       name: 'Building/fetching previous CI target: mathcomp-bigenough'
       run: NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link --argstr bundle 
