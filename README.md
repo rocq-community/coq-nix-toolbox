@@ -2,15 +2,9 @@
 
 ## General presentation
 
-The [Nix package manager](https://nixos.org/) is a package manager with a strong focus on reproducibility and isolation.
-
-The Coq Nix Toolbox is a set of helper scripts to ease setting up a Coq project for use with Nix, for Nix and non-Nix users alike. One of its main features is to generate GitHub Actions configuration files to continuously test a Coq project and its reverse dependencies.
-
-Besides Nix, the Coq Nix Toolbox relies on the [nixpkgs package repository](https://github.com/NixOS/nixpkgs) and its large collection of Coq packages.
-
 The Coq Nix Toolbox provide the following features:
 
-1. It can generate [GitHub Actions](https://github.com/features/actions) configuration files to trigger a CI for your Coq project and its reverse dependencies. This CI uses the Nix packaging system and a caching mechanism called [Cachix](https://www.cachix.org/).
+1. It can generate [GitHub Actions](https://github.com/features/actions) configuration files to trigger a github action CI for your Rocq project and its reverse dependencies. This CI uses the Nix packaging system and a caching mechanism called [Cachix](https://www.cachix.org/).
 
 2. It offers Nix configurations files so that one can locally obtain a shell with all dependencies preloaded by simply running `nix-shell` in the development root directory.
 
@@ -18,17 +12,22 @@ The Coq Nix Toolbox provide the following features:
 
 4. One can retrieve locally builds already performed on CI thanks to Cachix.
 
+The Coq Nix Toolbox relies on the [nixpkgs package repository](https://github.com/NixOS/nixpkgs) and its large collection of Rocq packages. The [Nix package manager](https://nixos.org/) is a package manager with a strong focus on reproducibility and isolation. One does not need to use NixOS.
+
+
 ## How to use
 
-### Standalone
+### Local setup (once per user and computer)
 
-Installing Nix locally is a prerequisite for this installation method (but a good thing to do anyway to take the most advantage of this toolbox). See https://nixos.org/download.html.
+The following section only needs to be setup once per computer, after the installation of Nix.
+
+1. Install Nix locally: see https://nixos.org/download.html.
 Additionally, in order to use binary caches from recognized organizations, please do
 ```bash
 nix-env -iA nixpkgs.cachix && cachix use coq && cachix use coq-community && cachix use math-comp
 ```
-This only needs to be performed once, after the installation of Nix.
 
+### Project setup (once per project/repo)
 Then, run the following commands at the root of your project (using a project-specific name instead of YOURPACKAGENAME, below) :
 
 ```bash
@@ -46,6 +45,8 @@ nix-shell --arg do-nothing true --run "genNixActions"
 ```
 
 Do not forget to commit the new files.
+
+### Project CI updates
 
 Later, you may want to update to the latest version of the toolbox and regenerate GitHub Action workflow(s) by running:
 
