@@ -1,5 +1,5 @@
 { overlays-dir, lib, rocq-overlays-dir, coq-overlays-dir, ocaml-overlays-dir, bundle,
-  attribute, coq-attribute, no-rocq-yet, pname, shell-attribute, shell-pname, src }:
+  attribute, coq-attribute, no-rocq-yet, pname, shell-attribute, src }:
 with builtins; with lib;
 let
   mk-overlay = path: self: super:
@@ -28,8 +28,8 @@ let
     in
       mapAttrs (n: ov: do-override (super.${n} or
         (switch n (optionals (!no-rocq-yet) [
-          { case = attribute;       out = newRocqPkg pname {}; }
-          { case = shell-attribute; out = newRocqPkg shell-pname {}; }
+          { case = attribute;       out = newRocqPkg attribute {}; }
+          { case = shell-attribute; out = newRocqPkg shell-attribute {}; }
         ]) (newRocqPkg n ((super.${n}.mk or (_: {})) self))
       )) ov) (bundle.rocqPackages or {});
   coq-overrides =
@@ -40,7 +40,7 @@ let
       mapAttrs (n: ov: do-override (super.${n} or
         (switch n [
           { case = coq-attribute;   out = newCoqPkg pname {}; }
-          { case = shell-attribute; out = newCoqPkg shell-pname {}; }
+          { case = shell-attribute; out = newCoqPkg shell-attribute {}; }
         ] (newCoqPkg n ((super.${n}.mk or (_: {})) self))
       )) ov) (bundle.coqPackages or {});
   fold-override = foldl (fpkg: override: fpkg.overrideScope override);

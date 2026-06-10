@@ -25,8 +25,8 @@ in with config; let
       path-to-attribute = config.path-to-attribute or [ "rocqPackages" ];
       coq-path-to-attribute = config.path-to-attribute or [ "coqPackages" ];
       path-to-shell-attribute =
-        if hasAttr config.shell-attribute (bundle.rocqPackages or {})
-        then path-to-attribute else coq-path-to-attribute;
+        if config.no-rocq-yet
+        then coq-path-to-attribute else path-to-attribute;
     in {
       # not configurable from config.nix:
       rocq = path-to-attribute ++ [ config.attribute ];
@@ -64,7 +64,7 @@ in with config; let
   mk-instance = bundleName: bundle: let
     overlays = import ./overlays.nix
       { inherit lib overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir bundle;
-        inherit (config) attribute coq-attribute no-rocq-yet pname shell-attribute shell-pname src; };
+        inherit (config) attribute coq-attribute no-rocq-yet pname shell-attribute src; };
 
     pkgs = import config.nixpkgs { inherit overlays; };
 
