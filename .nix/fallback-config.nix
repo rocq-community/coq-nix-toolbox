@@ -21,6 +21,8 @@ with (import (import ./nixpkgs.nix) {}).lib;
   ## compute several ci jobs as well
   bundles = (genAttrs [ "8.20" ]
     (v: {
+      rocqPackages.rocq-core.override.version = v;
+      rocqPackages.rocq-core.job = false;
       coqPackages.coq.override.version = v;
     })) // (genAttrs [ "9.0" "9.1" "9.2" ]
     (v: {
