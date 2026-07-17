@@ -103,8 +103,6 @@ with initial.lib; let
 
     passthru = (old.passthru or {}) // {inherit action pkgs;};
 
-    COQBIN = optionalString (!do-nothing) "";
-
     coq_version = optionalString (!do-nothing)
        pkgs.coqPackages.coq.coq-version;
 
