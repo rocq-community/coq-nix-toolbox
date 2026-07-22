@@ -12,9 +12,10 @@ with builtins; with lib; let
   };
   stepCheckout1 = {
     name =  "Git checkout";
-    uses =  "actions/checkout@v6";
+    uses =  "actions/checkout@v7";
     "with" = {
       fetch-depth = 0;
+      allow-unsafe-pr-checkout = true;
       ref = "\${{ env.target_commit }}";
     };
   };
@@ -36,9 +37,10 @@ with builtins; with lib; let
   };
   stepCheckout2 = {
     name =  "Git checkout";
-    uses =  "actions/checkout@v6";
+    uses =  "actions/checkout@v7";
     "with" = {
       fetch-depth = 0;
+      allow-unsafe-pr-checkout = true;
       ref = "\${{ env.tested_commit }}";
     };
   };
