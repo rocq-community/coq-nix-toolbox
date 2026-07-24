@@ -22,7 +22,7 @@ with (import (import ./nixpkgs.nix) {}).lib;
   bundles = (genAttrs [ "8.20" ]
     (v: {
       coqPackages.coq.override.version = v;
-    })) // (genAttrs [ "9.0" "9.1" "9.2" ]
+    })) // (genAttrs [ "9.0" "9.1" "9.2" "9.3" ]
     (v: {
       rocqPackages.rocq-core.override.version = v;
       coqPackages.coq.override.version = v;
@@ -41,6 +41,9 @@ with (import (import ./nixpkgs.nix) {}).lib;
     };
     "rocq-9.2" = {
       rocqPackages.rocq-core.override.version = "9.2";
+    };
+    "rocq-9.3" = {
+      rocqPackages.rocq-core.override.version = "9.3";
     };
     "rocq-master" = {
       rocqPackages.rocq-core.override.version = "master";
