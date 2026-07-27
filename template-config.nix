@@ -10,11 +10,6 @@
   ## Will determine the default main-job of the bundles defined below
   attribute = "template";
 
-  ## The attribute for coq compat shim, default to attribute
-  ## set this when you need both to differ
-  ## (for instance "rocq-elpi" and "coq-elpi")
-  # coq-attribute = "template";
-
   ## Set this when the package has no rocqPackages version yet
   ## (either in nixpkgs or in .nix/rocq-overlays)
   # no-rocq-yet = true;

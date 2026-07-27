@@ -52,7 +52,6 @@ in
 rec {
   format = "1.0.0";
   attribute = config.attribute or "template";
-  coq-attribute = config.coq-attribute or attribute;
   shell-attribute =
     (
       if config ? shell-pname then
