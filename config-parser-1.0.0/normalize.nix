@@ -60,7 +60,6 @@ rec {
         x: x
     )
     (config.shell-attribute or attribute);
-  no-rocq-yet = config.no-rocq-yet or false;
   nixpkgs = config.nixpkgs or initial.nixpkgs;
   pname = config.pname or attribute;
   coqproject = config.coqproject or "_CoqProject";
