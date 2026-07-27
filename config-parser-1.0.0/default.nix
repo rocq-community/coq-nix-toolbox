@@ -47,8 +47,7 @@ in with config; let
       foldl recursiveUpdate {} (
         optional (i ? coqPackages) (mk-main ppaths.shell config.shell-attribute)
         ++ optional (i ? rocqPackages) (mk-main ppaths.rocq config.attribute)
-        ++ optional (i ? coqPackages) (mk-main ppaths.coq config.attribute)
-        ++ [
+        ++ [ (mk-main ppaths.coq config.attribute)
              i
              (mk-bundles [ "rocqPackages" ] override)
              (mk-bundles [ "coqPackages" ] coq-override)

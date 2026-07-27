@@ -18,25 +18,15 @@ with (import (import ./nixpkgs.nix) {}).lib;
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
   ## compute several ci jobs as well
-  bundles = (genAttrs [ "8.20" ]
+  bundles = genAttrs [ "8.20" ]
     (v: {
       coqPackages.coq.override.version = v;
-    })) // (genAttrs [ "9.0" "9.1" "9.2" "9.3" ]
+    }) // genAttrs [ "9.0" "9.1" "9.2" "9.3" "master" ]
     (v: {
-      # Does not work when setting `rocqPackages` instead
       rocqPackages.rocq-core.override.version = v;
       rocqPackages.coq.override.version = v;
-      coqPackages.rocq-core.override.version = v;
-      coqPackages.coq.override.version = v;
-    })) // {
-    master = {
-      rocqPackages.rocq-core.override.version = "master";
-      rocqPackages.coq.override.version = "master";
-      coqPackages.rocq-core.override.version = "master";
-      coqPackages.coq.override.version = "master";
       coqPackages.heq.job = false;
-    };
-  };
+    });
 
   cachix.coq = {};
   cachix.math-comp = {};
