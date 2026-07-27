@@ -72,7 +72,7 @@ in with config; let
 
     genCI = import ../deps.nix
       { inherit lib;
-        coqPackages =
+        rocqPackages =
           (optionalAttrs (!bundle.isRocq) pkgs.coqPackages)
           // pkgs.rocqPackages; };
     jsonPkgsDeps = toJSON genCI.pkgsDeps;
