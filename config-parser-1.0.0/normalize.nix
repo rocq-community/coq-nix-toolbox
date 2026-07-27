@@ -43,7 +43,7 @@ let
     name: pkg:
     if name != "rocqPackages" && name != "coqPackages" then pkg else mapAttrs normalize-coqpkg pkg;
   normalize-bundle =
-    _name: b: mapAttrs normalize-pkg b // { isRocq = b ? rocqPackages && !(b ? coqPackages); };
+    _name: b: mapAttrs normalize-pkg b;
 in
 rec {
   format = "1.0.0";
