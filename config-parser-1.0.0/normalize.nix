@@ -39,11 +39,15 @@ let
               and an attribute in coqPackages.
           '');
     };
-  normalize-pkg =
-    name: pkg:
-    if name != "rocqPackages" && name != "coqPackages" then pkg else mapAttrs normalize-coqpkg pkg;
   normalize-bundle =
-    _name: b: mapAttrs normalize-pkg b;
+    _name: b:
+    let
+      rocqPkgs = (b.coqPackages or {}) // (b.rocqPackages or {});
+      normalize-pkg =
+        name: pkg:
+        if name != "rocqPackages" && name != "coqPackages" then pkg else mapAttrs normalize-coqpkg rocqPkgs;
+    in
+      mapAttrs normalize-pkg b;
 in
 rec {
   format = "1.0.0";
