@@ -32,42 +32,17 @@ let
           { case = shell-attribute; out = newRocqPkg shell-attribute {}; }
         ] (newRocqPkg n ((super.${n}.mk or (_: {})) self))
       )) ov) (bundle.rocqPackages or {});
-  coq-overrides =
-    self: super:
-    let newCoqPkg = pname: args: makeOverridable self.mkCoqDerivation
-      { inherit pname; version = "${src}"; } // args;
-    in
-      mapAttrs (n: ov: do-override (super.${n} or
-        (switch n [
-          { case = attribute;   out = newCoqPkg pname {}; }
-          { case = shell-attribute; out = newCoqPkg shell-attribute {}; }
-        ] (newCoqPkg n ((super.${n}.mk or (_: {})) self))
-      )) ov) (bundle.coqPackages or {});
   fold-override = foldl (fpkg: override: fpkg.overrideScope override);
   in
 [
   (mk-overlay overlays-dir)
   nixpkgs-overrides
-  (self: super: { rocqPackages = fold-override super.rocqPackages ([
+  (self: super: { coqPackages = fold-override super.coqPackages ([
+    (mk-overlay coq-overlays-dir)
     (mk-overlay rocq-overlays-dir)
     rocq-overrides
     (self: super: { rocq-core = super.rocq-core.override {
       customOCamlPackages = fold-override super.rocq-core.ocamlPackages [
-        (mk-overlay ocaml-overlays-dir)
-        ocaml-overrides
-      ];};})
-  ]);})
-  (self: super: { rocqPackages =
-    super.rocqPackages.filterPackages
-      (! (super.rocqPackages.rocq-core.dontFilter or false)); })
-  (self: super: { coqPackages = fold-override super.coqPackages ([
-    (self2: super2: { coq = super2.coq.override {
-      rocqPackages = super.rocqPackages;
-      };})
-    (mk-overlay coq-overlays-dir)
-    coq-overrides
-    (self: super: { coq = super.coq.override {
-      customOCamlPackages = fold-override super.coq.ocamlPackages [
         (mk-overlay ocaml-overlays-dir)
         ocaml-overrides
       ];};})
