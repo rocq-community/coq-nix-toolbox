@@ -13,21 +13,28 @@ with (import (import ./nixpkgs.nix) {}).lib;
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "9.0";
+  default-bundle = "9.2";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
   ## compute several ci jobs as well
-  bundles = genAttrs [ "8.20" ]
-    (v: {
-      coqPackages.coq.override.version = v;
-    }) // genAttrs [ "9.0" "9.1" "9.2" "9.3" "master" ]
+  bundles = genAttrs [ "9.0" "9.1" ]
     (v: {
       rocqPackages.rocq-core.override.version = v;
       rocqPackages.coq.override.version = v;
-      coqPackages.heq.job = false;
+    }) // genAttrs [ "9.2" "9.3" ]
+    (v: {
+      rocqPackages.rocq-core.override.version = v;
+      rocqPackages.coq.override.version = v;
+      rocqPackages.vsrocq-language-server.job = false;
+    }) // genAttrs [ "master" ]
+    (v: {
+      rocqPackages.rocq-core.override.version = v;
+      rocqPackages.coq.override.version = v;
+      rocqPackages.stdlib.override.version = v;
+      rocqPackages.vsrocq-language-server.job = false;
+      rocqPackages.heq.job = false;
     });
-
   cachix.coq = {};
   cachix.math-comp = {};
   cachix.coq-community.authToken = "CACHIX_AUTH_TOKEN";

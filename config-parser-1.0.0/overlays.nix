@@ -37,7 +37,7 @@ let
 [
   (mk-overlay overlays-dir)
   nixpkgs-overrides
-  (self: super: { coqPackages = fold-override super.coqPackages ([
+  (self: super: { rocqPackages = fold-override super.rocqPackages ([
     (mk-overlay coq-overlays-dir)
     (mk-overlay rocq-overlays-dir)
     rocq-overrides
@@ -47,7 +47,7 @@ let
         ocaml-overrides
       ];};})
   ]);})
-  (self: super: { coqPackages =
-    super.coqPackages.filterPackages
-      (! (super.coqPackages.coq.dontFilter or false)); })
+  (self: super: { rocqPackages =
+    super.rocqPackages.filterPackages
+      (! (super.rocqPackages.coq.dontFilter or false)); })
 ]

@@ -34,9 +34,9 @@ let
             - "_excluded" (the package is excluded from CI, always)
             - "_deps"     (the package is considered by the CI as a dependency)
             - "_allJobs"  (the job is triggered only when testing all existing jobs)
-            - "_all"      (the job is triggered only when testing all coqPackages)
+            - "_all"      (the job is triggered only when testing all rocqPackages)
             - a string which corresponds both to the job name
-              and an attribute in coqPackages.
+              and an attribute in rocqPackages.
           '');
     };
   normalize-bundle =
@@ -46,7 +46,7 @@ let
       normalize-pkg =
         name: pkg:
         if name != "rocqPackages" && name != "coqPackages" then pkg else mapAttrs normalize-coqpkg rocqPkgs;
-      bundle = { coqPackages = { }; } // b;
+      bundle = { rocqPackages = { }; } // b;
     in
       mapAttrs normalize-pkg bundle;
 in
