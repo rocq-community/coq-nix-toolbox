@@ -42,7 +42,7 @@ let
     nixpkgs = optionalImport nixpkgs-file (throw "cannot find nixpkgs");
     pkgs = import initial.nixpkgs {};
     src = src;
-    lib = (initial.pkgs.coqPackages.lib or tmp-pkgs.lib)
+    lib = (initial.pkgs.rocqPackages.lib or tmp-pkgs.lib)
           // { diag = f: x: f x x; };
     inherit overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir;
     inherit global-override override coq-override ocaml-override;
@@ -67,10 +67,10 @@ with initial.lib; let
   jsonBundles = toJSON (attrNames setup.bundles);
   jsonBundleSet = toJSON setup.bundles;
   jsonBundle = toJSON selected-instance.bundle;
-  coq-lsp = if selected-instance.pkgs.coqPackages?coq-lsp then
-     [ selected-instance.pkgs.coqPackages.coq-lsp ] else [];
-  vscoq = if selected-instance.pkgs.coqPackages?vscoq-language-server then
-     [ selected-instance.pkgs.coqPackages.vscoq-language-server ] else [];
+  coq-lsp = if selected-instance.pkgs.rocqPackages?coq-lsp then
+     [ selected-instance.pkgs.rocqPackages.coq-lsp ] else [];
+  vscoq = if selected-instance.pkgs.rocqPackages?vscoq-language-server then
+     [ selected-instance.pkgs.rocqPackages.vscoq-language-server ] else [];
   emacs = selected-instance.pkgs.emacs.pkgs.withPackages
     (epkgs: with epkgs.melpaPackages; [ proof-general ]);
   emacsInit = ./emacs-init.el;
@@ -104,7 +104,7 @@ with initial.lib; let
     passthru = (old.passthru or {}) // {inherit action pkgs;};
 
     coq_version = optionalString (!do-nothing)
-       pkgs.coqPackages.coq.coq-version;
+       pkgs.rocqPackages.rocq-core.rocq-version;
 
     nativeBuildInputs = optionals (!do-nothing)
       ((old.nativeBuildInputs or []) ++ coq-lsp ++ vscoq) ++ [ pkgs.remarshal ];

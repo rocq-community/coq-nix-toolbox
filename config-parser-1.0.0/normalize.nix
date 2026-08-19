@@ -34,21 +34,25 @@ let
             - "_excluded" (the package is excluded from CI, always)
             - "_deps"     (the package is considered by the CI as a dependency)
             - "_allJobs"  (the job is triggered only when testing all existing jobs)
-            - "_all"      (the job is triggered only when testing all coqPackages)
+            - "_all"      (the job is triggered only when testing all rocqPackages)
             - a string which corresponds both to the job name
-              and an attribute in coqPackages.
+              and an attribute in rocqPackages.
           '');
     };
-  normalize-pkg =
-    name: pkg:
-    if name != "rocqPackages" && name != "coqPackages" then pkg else mapAttrs normalize-coqpkg pkg;
   normalize-bundle =
-    _name: b: mapAttrs normalize-pkg b // { isRocq = b ? rocqPackages && !(b ? coqPackages); };
+    _name: b:
+    let
+      rocqPkgs = (b.coqPackages or {}) // (b.rocqPackages or {});
+      normalize-pkg =
+        name: pkg:
+        if name != "rocqPackages" && name != "coqPackages" then pkg else mapAttrs normalize-coqpkg rocqPkgs;
+      bundle = { rocqPackages = { }; } // b;
+    in
+      mapAttrs normalize-pkg bundle;
 in
 rec {
   format = "1.0.0";
   attribute = config.attribute or "template";
-  coq-attribute = config.coq-attribute or attribute;
   shell-attribute =
     (
       if config ? shell-pname then
@@ -57,7 +61,6 @@ rec {
         x: x
     )
     (config.shell-attribute or attribute);
-  no-rocq-yet = config.no-rocq-yet or false;
   nixpkgs = config.nixpkgs or initial.nixpkgs;
   pname = config.pname or attribute;
   coqproject = config.coqproject or "_CoqProject";

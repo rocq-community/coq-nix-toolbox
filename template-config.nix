@@ -10,15 +10,6 @@
   ## Will determine the default main-job of the bundles defined below
   attribute = "template";
 
-  ## The attribute for coq compat shim, default to attribute
-  ## set this when you need both to differ
-  ## (for instance "rocq-elpi" and "coq-elpi")
-  # coq-attribute = "template";
-
-  ## Set this when the package has no rocqPackages version yet
-  ## (either in nixpkgs or in .nix/rocq-overlays)
-  # no-rocq-yet = true;
-
   ## If you want to select a different attribute (to build from the local sources as well)
   ## when calling `nix-shell` and `nix-build` without the `--argstr job` argument
   # shell-attribute = "{{nix_name}}";
@@ -53,21 +44,16 @@
     ## through the following attribute
     # rocqPackages.rocq-core.override.version = "9.0";
 
-    ## You can override Coq and other Coq coqPackages
-    ## through the following attribute
-    # coqPackages.coq.override.version = "8.11";
-
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
     # rocqPackages.<rocq-pkg>.overrideAttrs = o: <overrides>;
-    # coqPackages.<coq-pkg>.overrideAttrs = o: <overrides>;
     ## or a "long" overlay to put in `.nix/rocq-overlays` or `.nix/coq-overlays`
     ## you may use `nix-shell --run fetchRocqOverlay <rocq-pkg>`
     ## or `nix-shell --run fetchCoqOverlay <coq-pkg>`
     ## to automatically retrieve the one from nixpkgs
     ## if it exists and is correctly named/located
 
-    ## You can override Coq and other coqPackages
+    ## You can override ocamlPackages
     ## through the following attribute
     ## If <ocaml-pkg> does not support light overrides,
     ## you may use `overrideAttrs` or long overlays
@@ -81,12 +67,11 @@
 
     ## you may mark a package as a main CI job (one to take deps and
     ## rev deps from) as follows
-    # coqPackages.<main-pkg>.main-job = true;
+    # rocqPackages.<main-pkg>.main-job = true;
     ## by default the current package and its shell attributes are main jobs
 
     ## you may mark a package as a CI job as follows
     #  rocqPackages.<another-pkg>.job = "test";
-    #  coqPackages.<another-pkg>.job = "test";
     ## It can then built through
     ## nix-build --argstr bundle "default" --arg job "test";
     ## in the absence of such a directive, the job "another-pkg" will

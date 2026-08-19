@@ -1,5 +1,5 @@
 { overlays-dir, lib, rocq-overlays-dir, coq-overlays-dir, ocaml-overlays-dir, bundle,
-  attribute, coq-attribute, no-rocq-yet, pname, shell-attribute, src }:
+  attribute, pname, shell-attribute, src }:
 with builtins; with lib;
 let
   mk-overlay = path: self: super:
@@ -27,28 +27,18 @@ let
       { inherit pname; version = "${src}"; } // args;
     in
       mapAttrs (n: ov: do-override (super.${n} or
-        (switch n (optionals (!no-rocq-yet) [
+        (switch n [
           { case = attribute;       out = newRocqPkg attribute {}; }
           { case = shell-attribute; out = newRocqPkg shell-attribute {}; }
-        ]) (newRocqPkg n ((super.${n}.mk or (_: {})) self))
+        ] (newRocqPkg n ((super.${n}.mk or (_: {})) self))
       )) ov) (bundle.rocqPackages or {});
-  coq-overrides =
-    self: super:
-    let newCoqPkg = pname: args: makeOverridable self.mkCoqDerivation
-      { inherit pname; version = "${src}"; } // args;
-    in
-      mapAttrs (n: ov: do-override (super.${n} or
-        (switch n [
-          { case = coq-attribute;   out = newCoqPkg pname {}; }
-          { case = shell-attribute; out = newCoqPkg shell-attribute {}; }
-        ] (newCoqPkg n ((super.${n}.mk or (_: {})) self))
-      )) ov) (bundle.coqPackages or {});
   fold-override = foldl (fpkg: override: fpkg.overrideScope override);
   in
 [
   (mk-overlay overlays-dir)
   nixpkgs-overrides
   (self: super: { rocqPackages = fold-override super.rocqPackages ([
+    (mk-overlay coq-overlays-dir)
     (mk-overlay rocq-overlays-dir)
     rocq-overrides
     (self: super: { rocq-core = super.rocq-core.override {
@@ -59,20 +49,5 @@ let
   ]);})
   (self: super: { rocqPackages =
     super.rocqPackages.filterPackages
-      (! (super.rocqPackages.rocq-core.dontFilter or false)); })
-  (self: super: { coqPackages = fold-override super.coqPackages ([
-    (self2: super2: { coq = super2.coq.override {
-      rocqPackages = super.rocqPackages;
-      };})
-    (mk-overlay coq-overlays-dir)
-    coq-overrides
-    (self: super: { coq = super.coq.override {
-      customOCamlPackages = fold-override super.coq.ocamlPackages [
-        (mk-overlay ocaml-overlays-dir)
-        ocaml-overrides
-      ];};})
-  ]);})
-  (self: super: { coqPackages =
-    super.coqPackages.filterPackages
-      (! (super.coqPackages.coq.dontFilter or false)); })
+      (! (super.rocqPackages.coq.dontFilter or false)); })
 ]

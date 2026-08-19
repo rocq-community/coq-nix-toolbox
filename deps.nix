@@ -3,19 +3,19 @@
 
 # shortname: mathcomp-ssreflect
 # longname: coq8.20-mathcomp-ssreflect-2.2.0
-{ lib, coqPackages }:
+{ lib, rocqPackages }:
 with builtins; with lib;
 let
-  # keep all derivations inside coqPackages
-  initialCoqPkgs = filterAttrs (_: isDerivation) coqPackages;
+  # keep all derivations inside rocqPackages
+  initialRocqPkgs = filterAttrs (_: isDerivation) rocqPackages;
   # building a map longnames -> shortnames
   canonicalShortname =
-     mapAttrs' (n: v: { name = "${v.name}"; value = n; }) initialCoqPkgs;
+     mapAttrs' (n: v: { name = "${v.name}"; value = n; }) initialRocqPkgs;
   # probably filtering out duplicates? (mathcomp-ssreflect = ssreflect,...)
   # keeping only packages whose shortname is the canonical one (determined just above)
-  coqPkgs = filterAttrs (sn: _: elem sn (attrValues canonicalShortname)) initialCoqPkgs;
+  rocqPkgs = filterAttrs (sn: _: elem sn (attrValues canonicalShortname)) initialRocqPkgs;
   # a map name -> list (shortname of derivations from {propagatedB,b}uildInputs)
-  # keeping only derivations in coqPackages
+  # keeping only derivations in rocqPackages
   pkgsDeps =
     let
       # takes a derivation [x] as input and outputs a list
@@ -29,12 +29,12 @@ let
         (if isList (head l) then deepFlatten (head l) else [ (head l) ])
         ++ deepFlatten (tail l);
     in
-      flip mapAttrs coqPkgs (n: v: flatten
+      flip mapAttrs rocqPkgs (n: v: flatten
         (map findInput (deepFlatten [v.buildInputs v.propagatedBuildInputs]))
       );
   # list of all canonical shortnames, topologically sorted
   # according to dependencies (first has no dependencies)
-  pkgsSorted = (toposort (x: y: elem x pkgsDeps.${y}) (attrNames coqPkgs)).result;
+  pkgsSorted = (toposort (x: y: elem x pkgsDeps.${y}) (attrNames rocqPkgs)).result;
   # done: map canonical shortname -> its currently known reverse dependencies
   # as an attrSet shortname -> bool (where the boolean is always true)
   pkgsRevDepsSetNoAlias = foldl (done: p: foldl (done: d:
@@ -46,7 +46,7 @@ let
   # for all shortnames (not just canonical ones)
   pkgsRevDepsSet = mapAttrs
      (_: p: let pname = canonicalShortname.${p.name} or p.name; in
-       pkgsRevDepsSetNoAlias.${pname} or {}) initialCoqPkgs;
+       pkgsRevDepsSetNoAlias.${pname} or {}) initialRocqPkgs;
   # map shortname -> list of shortnames
   pkgsRevDeps = mapAttrs (n: v: attrNames v) pkgsRevDepsSet;
 in

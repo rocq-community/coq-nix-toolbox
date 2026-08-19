@@ -23,15 +23,10 @@ in with config; let
   bundle-ppaths = bundle:
     let
       path-to-attribute = config.path-to-attribute or [ "rocqPackages" ];
-      coq-path-to-attribute = config.path-to-attribute or [ "coqPackages" ];
-      path-to-shell-attribute =
-        if config.no-rocq-yet
-        then coq-path-to-attribute else path-to-attribute;
     in {
       # not configurable from config.nix:
       rocq = path-to-attribute ++ [ config.attribute ];
-      coq = coq-path-to-attribute ++ [ config.coq-attribute ];
-      shell = path-to-shell-attribute ++ [ config.shell-attribute ];
+      shell = path-to-attribute ++ [ config.shell-attribute ];
     };
 
   # preparing bundles
@@ -47,24 +42,21 @@ in with config; let
     (_: i:
       let ppaths = bundle-ppaths i; in
       foldl recursiveUpdate {} (
-        optional (i ? coqPackages) (mk-main ppaths.shell config.shell-attribute)
-        ++ optional ((i ? rocqPackages) && !(config.no-rocq-yet)) (mk-main ppaths.rocq config.attribute)
-        ++ optional (i ? coqPackages) (mk-main ppaths.coq config.coq-attribute)
-        ++ [
-             i
-             (mk-bundles [ "rocqPackages" ] override)
-             (mk-bundles [ "coqPackages" ] coq-override)
-             (mk-bundles [ "ocamlPackages" ] ocaml-override)
-             (mk-bundles [ ] global-override)
+        [ (mk-main ppaths.shell config.shell-attribute)
+          (mk-main ppaths.rocq config.attribute)
+          i
+          (mk-bundles [ "rocqPackages" ] override)
+          (mk-bundles [ "ocamlPackages" ] ocaml-override)
+          (mk-bundles [ ] global-override)
         ])) config.bundles;
 
   buildInputFrom = pkgs: str:
-    pkgs.rocqPackages.${str} or pkgs.coqPackages.${str} or pkgs.ocamlPackages.${str} or pkgs.${str};
+    pkgs.rocqPackages.${str} or pkgs.ocamlPackages.${str} or pkgs.${str};
 
   mk-instance = bundleName: bundle: let
     overlays = import ./overlays.nix
       { inherit lib overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir bundle;
-        inherit (config) attribute coq-attribute no-rocq-yet pname shell-attribute src; };
+        inherit (config) attribute pname shell-attribute src; };
 
     pkgs = import config.nixpkgs { inherit overlays; };
 
@@ -72,9 +64,7 @@ in with config; let
 
     genCI = import ../deps.nix
       { inherit lib;
-        coqPackages =
-          (optionalAttrs (!bundle.isRocq) pkgs.coqPackages)
-          // pkgs.rocqPackages; };
+        inherit (pkgs) rocqPackages; };
     jsonPkgsDeps = toJSON genCI.pkgsDeps;
     jsonPkgsRevDeps = toJSON genCI.pkgsRevDeps;
 
@@ -107,10 +97,10 @@ in with config; let
       pkg.overrideAttrs (o: { buildInputs = o.buildInputs ++ bi;});
 
     ppaths = bundle-ppaths bundle;
-    notfound-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.coq}";
+    notfound-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.rocq}";
     notfound-shell-ppath = throw "config-parser-1.0.0: not found: ${toString ppaths.shell}";
-    this-pkg = patchBIPkg (attrByPath ppaths.coq notfound-ppath pkgs);
-    this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.coq notfound-ppath pkgs) pkgs);
+    this-pkg = patchBIPkg (attrByPath ppaths.rocq notfound-ppath pkgs);
+    this-shell-pkg = patchBIPkg (attrByPath ppaths.shell (attrByPath ppaths.rocq notfound-ppath pkgs) pkgs);
 
     in rec {
       inherit bundle pkgs this-pkg this-shell-pkg ci;

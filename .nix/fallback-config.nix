@@ -8,48 +8,33 @@ with (import (import ./nixpkgs.nix) {}).lib;
   ## The attribute to build, either from nixpkgs
   ## of from the overlays located in `.nix/rocq-overlays` or `.nix/coq-overlays`
   attribute = "rocq-core";
-  coq-attribute = "coq";
   shell-attribute = "coq-shell";
   src = ../coq-shell;
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "9.0";
+  default-bundle = "9.2";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration, the can be used to
   ## compute several ci jobs as well
-  bundles = (genAttrs [ "8.20" ]
-    (v: {
-      coqPackages.coq.override.version = v;
-    })) // (genAttrs [ "9.0" "9.1" "9.2" "9.3" ]
+  bundles = genAttrs [ "9.0" "9.1" ]
     (v: {
       rocqPackages.rocq-core.override.version = v;
-      coqPackages.coq.override.version = v;
-    })) // {
-    master = {
-      rocqPackages.rocq-core.override.version = "master";
-      coqPackages.coq.override.version = "master";
-      coqPackages.heq.job = false;
-      coqPackages.stdlib.job = false;
-    };
-    "rocq-9.0" = {
-      rocqPackages.rocq-core.override.version = "9.0";
-    };
-    "rocq-9.1" = {
-      rocqPackages.rocq-core.override.version = "9.1";
-    };
-    "rocq-9.2" = {
-      rocqPackages.rocq-core.override.version = "9.2";
-    };
-    "rocq-9.3" = {
-      rocqPackages.rocq-core.override.version = "9.3";
-    };
-    "rocq-master" = {
-      rocqPackages.rocq-core.override.version = "master";
-    };
-  };
-
+      rocqPackages.coq.override.version = v;
+    }) // genAttrs [ "9.2" "9.3" ]
+    (v: {
+      rocqPackages.rocq-core.override.version = v;
+      rocqPackages.coq.override.version = v;
+      rocqPackages.vsrocq-language-server.job = false;
+    }) // genAttrs [ "master" ]
+    (v: {
+      rocqPackages.rocq-core.override.version = v;
+      rocqPackages.coq.override.version = v;
+      rocqPackages.stdlib.override.version = v;
+      rocqPackages.vsrocq-language-server.job = false;
+      rocqPackages.heq.job = false;
+    });
   cachix.coq = {};
   cachix.math-comp = {};
   cachix.coq-community.authToken = "CACHIX_AUTH_TOKEN";
