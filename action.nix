@@ -148,6 +148,10 @@ with builtins; with lib; let
           paths-ignore = [ workflow_path ];
         };
       };
+      concurrency = {
+        group = "\${{ github.workflow }}-\${{ github.ref }}";
+        cancel-in-progress = true;
+      };
       jobs = actionJobs;
     };
 
