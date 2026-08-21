@@ -152,6 +152,12 @@ with builtins; with lib; let
         group = "\${{ github.workflow }}-\${{ github.ref }}";
         cancel-in-progress = true;
       };
+      # The generated jobs only read the repository; they never use the
+      # GITHUB_TOKEN to write.  Being explicit matters because the workflows run
+      # on pull_request_target, where the token is the *target* repository's and
+      # is writable by default unless the repository owner has changed the
+      # default workflow permissions.
+      permissions.contents = "read";
       jobs = actionJobs;
     };
 
