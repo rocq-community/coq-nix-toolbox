@@ -29,23 +29,37 @@ in
   update-nixpkgs ? false,
   job ? null,
   bundle ? null,
-  inNixShell ? null
+  inNixShell ? null,
+  system ? builtins.currentSystem,
 }@args:
 let
   optionalImport = f: d:
     if (isPath f || isString f) && pathExists f then import f else d;
+  optionalImportWithArgs =
+    file: args: d:
+    let
+      f = optionalImport file d;
+      fargs = builtins.functionArgs f;
+    in
+    if builtins.isFunction f then f (builtins.intersectAttrs fargs args) else f;
   do-nothing = (args.do-nothing or false) || update-nixpkgs || ci-matrix;
   unNull = default: value: if isNull value then default else value;
+  fallback-config = optionalImportWithArgs fallback-file {
+    inherit (initial.pkgs) lib;
+  } { };
   initial = {
-    config = (optionalImport config-file (optionalImport fallback-file {}))
+    config = (optionalImport config-file fallback-config)
               // config;
     nixpkgs = optionalImport nixpkgs-file (throw "cannot find nixpkgs");
-    pkgs = import initial.nixpkgs {};
+    pkgs = import initial.nixpkgs {
+      inherit system;
+    };
     src = src;
     lib = (initial.pkgs.rocqPackages.lib or tmp-pkgs.lib)
           // { diag = f: x: f x x; };
     inherit overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir;
     inherit global-override override coq-override ocaml-override;
+    inherit system;
   };
   my-throw = x: throw "Coq nix toolbox error: ${x}";
 in
