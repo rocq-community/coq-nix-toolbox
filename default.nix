@@ -29,7 +29,8 @@ in
   update-nixpkgs ? false,
   job ? null,
   bundle ? null,
-  inNixShell ? null
+  inNixShell ? null,
+  system ? builtins.currentSystem,
 }@args:
 let
   optionalImport = f: d:
@@ -50,12 +51,15 @@ let
     config = (optionalImport config-file fallback-config)
               // config;
     nixpkgs = optionalImport nixpkgs-file (throw "cannot find nixpkgs");
-    pkgs = import initial.nixpkgs {};
+    pkgs = import initial.nixpkgs {
+      inherit system;
+    };
     src = src;
     lib = (initial.pkgs.rocqPackages.lib or tmp-pkgs.lib)
           // { diag = f: x: f x x; };
     inherit overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir;
     inherit global-override override coq-override ocaml-override;
+    inherit system;
   };
   my-throw = x: throw "Coq nix toolbox error: ${x}";
 in
