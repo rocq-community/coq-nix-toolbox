@@ -161,7 +161,7 @@ with builtins; with lib; let
         };
       };
       concurrency = {
-        group = "\${{ github.workflow }}-\${{ github.ref }}";
+        group = "\${{ github.workflow }}-\${{ github.head_ref }}";
         cancel-in-progress = true;
       };
       # The generated jobs only read the repository; they never use the
