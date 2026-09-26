@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rocq Nix Toolbox</title>
+  <link rel="icon" type="image/svg+xml" href="rocq-nix-toolbox.svg">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="This is the website for documentation to the Rocq Nix Toolbox">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Nunito&family=Quicksand:wght@500&display=swap');
+
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3&display=swap');
+
+    body {
+      font-family: 'Source Sans 3', 'Nunito';
+      font-size: 12pt;
+      text-align: justify
+    }
+
+    .markdown-section code, .markdown-section output:after, .markdown-section pre {
+      font-family: 'JetBrains Mono', Monaco, courier, monospace
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: '',
+      repo: '',
+      homepage: "home.md",
+      loadSidebar: "sidebar.md"
+    };
+  </script>
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-coq.min.js"></script>
+</body>
+</html>
