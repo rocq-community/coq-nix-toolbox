@@ -3,8 +3,8 @@
 with builtins;
 { config, # in format 1.0.0
   nixpkgs, # source directory for nixpkgs to provide overlays
-  pkgs ? import ../nixpkgs {}, # some instance of pkgs for libraries
-  src ? ./., # the source directory
+  pkgs, # some instance of pkgs for libraries
+  src, # the source directory
   overlays-dir,
   rocq-overlays-dir,
   coq-overlays-dir,
@@ -14,6 +14,7 @@ with builtins;
   ocaml-override ? {},
   global-override ? {},
   lib,
+  system,
 }@initial:
 with lib;
 let config = import ./normalize.nix
@@ -58,7 +59,7 @@ in with config; let
       { inherit lib overlays-dir rocq-overlays-dir coq-overlays-dir ocaml-overlays-dir bundle;
         inherit (config) attribute pname shell-attribute src; };
 
-    pkgs = import config.nixpkgs { inherit overlays; };
+    pkgs = import config.nixpkgs { inherit overlays system; };
 
     ci = import ./ci.nix { inherit lib this-shell-pkg pkgs bundle; };
 
