@@ -161,7 +161,14 @@ with builtins; with lib; let
         };
       };
       concurrency = {
-        group = "\${{ github.workflow }}-\${{ github.head_ref }}";
+        # github.ref is the pull request branch for pull_request and
+        # the base branch for pull_request_target. So we need to add
+        # head_ref, which is the pull request branch in both case, to
+        # avoid pull_request_target jobs from different pull requests
+        # (on the same master branch) to cancel each other. We keep
+        # ref to avoid pull_request and pull_request_target jobs on
+        # the same pull request to cancel each other.
+        group = "\${{ github.workflow }}-\${{ github.ref }}-\${{ github.head_ref }}";
         cancel-in-progress = true;
       };
       # The generated jobs only read the repository; they never use the
