@@ -62,6 +62,24 @@ let
     inherit system;
   };
   my-throw = x: throw "Coq nix toolbox error: ${x}";
+  tryToJson =
+    let
+      serializable = node:
+        if isFunction node then
+          false
+        else if isAttrs node then
+          all serializable (attrValues node)
+        else if isList node then
+          all serializable node
+        else
+          true;
+    in x: name:
+      if serializable x then
+        toJSON x
+      else
+        toJSON {
+          error = "Cannot serialize ${name} to JSON";
+        };
 in
 with initial.lib; let
   inNixShell = args.inNixShell or trivial.inNixShell;
@@ -79,8 +97,8 @@ with initial.lib; let
       + optionalString update-nixpkgs "\nupdateNixpkgsUnstable; exit"
       + optionalString ci-matrix "\nnixBundles; exit";
   jsonBundles = toJSON (attrNames setup.bundles);
-  jsonBundleSet = toJSON setup.bundles;
-  jsonBundle = toJSON selected-instance.bundle;
+  jsonBundleSet = tryToJson setup.bundles "jsonBundleSet";
+  jsonBundle = tryToJson selected-instance.bundle "jsonBundle";
   coq-lsp = if selected-instance.pkgs.rocqPackages?coq-lsp then
      [ selected-instance.pkgs.rocqPackages.coq-lsp ] else [];
   vscoq = if selected-instance.pkgs.rocqPackages?vscoq-language-server then
@@ -89,7 +107,7 @@ with initial.lib; let
     (epkgs: with epkgs.melpaPackages; [ proof-general ]);
   emacsInit = ./emacs-init.el;
 
-  jsonSetupConfig = toJSON setup.config;
+  jsonSetupConfig = tryToJson setup.config "jsonSetupConfig";
 
   ciByBundle = flip mapAttrs setup.instances (_: v:
     mapAttrs (_: x: map (x: x.name) x) v.ci.set);
