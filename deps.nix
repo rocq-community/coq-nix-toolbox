@@ -3,11 +3,11 @@
 
 # shortname: mathcomp-ssreflect
 # longname: coq8.20-mathcomp-ssreflect-2.2.0
-{ lib, coqPackages }:
+{ lib, rocqPackages }:
 with builtins; with lib;
 let
-  # keep all derivations inside coqPackages
-  initialCoqPkgs = filterAttrs (_: isDerivation) coqPackages;
+  # keep all derivations inside rocqPackages
+  initialCoqPkgs = filterAttrs (_: isDerivation) rocqPackages;
   # building a map longnames -> shortnames
   canonicalShortname =
      mapAttrs' (n: v: { name = "${v.name}"; value = n; }) initialCoqPkgs;
@@ -15,7 +15,7 @@ let
   # keeping only packages whose shortname is the canonical one (determined just above)
   coqPkgs = filterAttrs (sn: _: elem sn (attrValues canonicalShortname)) initialCoqPkgs;
   # a map name -> list (shortname of derivations from {propagatedB,b}uildInputs)
-  # keeping only derivations in coqPackages
+  # keeping only derivations in rocqPackages
   pkgsDeps =
     let
       # takes a derivation [x] as input and outputs a list

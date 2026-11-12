@@ -17,15 +17,8 @@
           then (overrides) # If ${overrides} is a derivation, we use it as our new package
           else ((prev.${pkg}.override (overrides.override or {})).overrideAttrs (overrides.overrideAttrs or {})) # Else, we override the package with the contents of ${overrides}.override
         )) rocqPackagesOverrides;
-        coqPackagesOverrides = bundleOverrides.coqPackages or {};
-        coqPackagesOverridden = prev: lib.mapAttrs (pkg: overrides: ( # For each ${pkg} overriden with ${overrides}
-          if (lib.attrsets.isDerivation overrides)
-          then (overrides) # If ${overrides} is a derivation, we use it as our new package
-          else ((prev.${pkg}.override (overrides.override or {})).overrideAttrs (overrides.overrideAttrs or {})) # Else, we override the package with the contents of ${overrides}.override
-        )) coqPackagesOverrides;
       in (final: prev: {
         rocqPackages = prev.rocqPackages.overrideScope (finalR: prevR: rocqPackagesOverridden prevR);
-        coqPackages = prev.coqPackages.overrideScope (finalR: prevR: coqPackagesOverridden prevR);
       });
 
       # Turns an attribute set of overlays (for example, the `overlays` output of a flake),
@@ -56,22 +49,9 @@
           );
         in (final: prev: {rocqPackages = prev.rocqPackages.overrideScope (finalR: prevR: packages finalR);});
 
-      # First argument is either an attributeSet linking packages names to nix files paths,
-      # or a function taking the "final" pkgs and return an attribute set linking packages names to packages derivations
-      mkCoqRecipesOverlay = packagesInput:
-        let packages =
-          if (lib.isAttrs packagesInput)
-          then (pkgs: lib.mapAttrs (pkgName: pkgRecipe:
-              lib.throwIfNot (lib.isPath pkgRecipe) "First argument of `mkCoqRecipesOverlay`, if it is an attribute set, should only contain paths" <|
-              pkgs.callPackage pkgRecipe {}
-            ) packagesInput
-          ) else (
-              lib.throwIfNot (lib.isFunction packagesInput) "First argument of `mkCoqRecipesOverlay`, if it isn't an attribute set, should be a function taking a pkgs instance" packagesInput
-          );
-        in (final: prev: {coqPackages = prev.coqPackages.overrideScope (finalR: prevR: packages finalR);});
 
   in {
-      inherit mkOverlay exportOverlays nixpkgs mkRocqRecipesOverlay mkCoqRecipesOverlay;
+      inherit mkOverlay exportOverlays nixpkgs mkRocqRecipesOverlay;
       composeOverlays = lib.composeManyExtensions;
   };
 }
