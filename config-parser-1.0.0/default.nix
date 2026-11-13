@@ -92,7 +92,6 @@ in with config; let
       inherit jobs;
       bundles = bundleName;
       deps = genCI.pkgsDeps;
-    } {
       push-branches = bundle.push-branches or [ "master" ];
     };
     jsonAction = toJSON action;

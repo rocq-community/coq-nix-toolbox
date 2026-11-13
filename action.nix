@@ -149,8 +149,7 @@ with builtins; with lib; let
       jobs = actionJobs;
     };
 
-  mkAction = { jobs ? [], bundles ? [], deps ? {}, cachix ? {} }@args:
-      { push-branches ? [] }:
-    mkActionFromJobs {inherit bundles push-branches; actionJobs = mkJobs args; };
+  mkAction = { jobs ? [], bundles ? [], deps ? {}, cachix ? {}, push-branches ? [] }@args:
+    mkActionFromJobs {inherit bundles push-branches; actionJobs = mkJobs {inherit jobs bundles deps cachix;}; };
 
 in { inherit mkAction; }

@@ -8,6 +8,15 @@
   outputs = { self, nixpkgs }: let
       lib = nixpkgs.lib;
 
+      # Gets the transitivity closure of the second argument according to the relation in the first argument.
+      # The first argument is an attribute set of list of strings describing for each string its outwards adjacency list
+      # Example: transitiveClosure { a = ["b" "c"]; b = []; c = ["b" "e"]; d = ["c"]; e = []; } ["d"] is ["d" "c" "b" "e"]
+      # This function encodes sets as attributes sets where all values are true
+      transitiveClosure = rel: l:
+        lib.attrNames <| lib.fixedPoints.converge
+          (x: x // lib.mergeAttrsList (lib.map (n: lib.genAttrs rel.${n} (_: true)) (lib.attrNames x)))
+          (lib.genAttrs l (_: true));
+
       # Generates a nixpkgs overlay from the configuration attribute set
       # The options of this attribute set are described in bundle-config.md
       mkOverlay = bundleOverrides: let
@@ -49,9 +58,43 @@
           );
         in (final: prev: {rocqPackages = prev.rocqPackages.overrideScope (finalR: prevR: packages finalR);});
 
+      # A derivation constructing a github action file for a name, an overlay and a given set of jobs
+      githubAction = name: overlay: jobs: let
+        inherit (import ./action.nix { inherit lib; }) mkAction;
+        system = "x86_64-linux"; # actions are only built for x64-linux
+        pkgs = import nixpkgs { inherit system; };
+        rocqPackages = (import nixpkgs { inherit system; overlays = [ overlay ]; }).rocqPackages;
+        genCI = import ./deps.nix { inherit lib rocqPackages; };
+        deps = genCI.pkgsDeps;
+        allDependencies = transitiveClosure deps jobs;
+        allReverseDependencies = transitiveClosure genCI.pkgsRevDeps jobs;
+        requiredJobs = allDependencies ++ allReverseDependencies;
+        action = mkAction {
+          cachix = {}; #TODO support cachix ?
+          jobs = requiredJobs;
+          bundles = name;
+          inherit deps;
+          push-branches = [ "master" ]; # We only push on the following branches
+        };
+        jsonAction = pkgs.writeTextFile {
+          name = "github-action-${name}.json";
+          text = builtins.toJSON action;
+        };
+      in builtins.trace (requiredJobs) <| pkgs.runCommand "github-action-${name}.yml" {} ''
+        cat ${jsonAction} | ${pkgs.haskellPackages.yaml.bin}/bin/json2yaml > $out
+      '';
+
+      # A derivation constructing github action files for a given attrset of overlays and a given list of jobs
+      githubActions = overlays: jobs: let
+        system = "x86_64-linux"; # actions are only built for x64-linux
+        pkgs = import nixpkgs { inherit system; };
+      in pkgs.linkFarm "github-actions" <| lib.attrsets.mapAttrsToList (name: overlay: {
+          name = "github-action-${name}.yml";
+          path = githubAction name overlay jobs;
+        }) overlays;
 
   in {
-      inherit mkOverlay exportOverlays nixpkgs mkRocqRecipesOverlay;
+      inherit mkOverlay exportOverlays nixpkgs mkRocqRecipesOverlay githubActions;
       composeOverlays = lib.composeManyExtensions;
   };
 }

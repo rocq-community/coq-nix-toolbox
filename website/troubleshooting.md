@@ -24,3 +24,18 @@ rocqPackages.myPackage.overrideAttrs.src = lib.fetchFromGithub {
     hash = "";
 };
 ```
+
+
+### Refusing to evaluate package 'rocq-core9.2-mypackage-broken' in /nix/store/.../rocq/default.nix:xxx because it has problems: - broken: This package is broken
+
+This means that the packages is marked as broken in nixpkgs.
+The most common reason is that you upgraded the rocq dependency of the package,
+but the package is not available in nixpkgs with this new rocq version.
+
+A quick way to override this is to specify by hand the version you want for the package, with
+the following bundle attribute:
+```Nix
+rocqPackages.mypackage.override.version = "X.X.X";
+```
+
+This version override needs to be known by nixpkgs or else, you will encounter the `fetchTarball requires sha256` error.
